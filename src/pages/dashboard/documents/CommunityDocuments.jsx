@@ -246,11 +246,11 @@ const CommunityDocuments = () => {
             value={filters.documentType}
             onChange={(e) => setFilters(prev => ({ ...prev, documentType: e.target.value }))}
           >
-            <option value="">Tất cả Định dạng</option>
+            <option value="">Tất cả loại tài liệu</option>
             {filterOptions.documentTypes.map(type => (
               <option key={type} value={type}>{type}</option>
             ))}
-            
+
           </select>
           
           <select
