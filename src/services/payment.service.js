@@ -20,12 +20,17 @@ const paymentService = {
     return response.data?.data;
   },
 
-  createPaymentByPlan: async (planId, returnUrl, cancelUrl) => {
+  createPaymentByPlan: async (
+    planId,
+    returnUrl,
+    cancelUrl
+  ) => {
     const response = await api.post('/payment/create', {
       planId,
       returnUrl,
       cancelUrl
     });
+
     return response.data?.data;
   },
 
