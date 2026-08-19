@@ -82,6 +82,11 @@ const documentService = {
     return response.data?.data;
   },
 
+  getPublicFilterOptions: async () => {
+    const response = await api.get('/documents/public/filter-options');
+    return response.data?.data;
+  },
+
   getById: async (id) => {
     const response = await api.get(`/documents/${id}`);
     return response.data?.data;

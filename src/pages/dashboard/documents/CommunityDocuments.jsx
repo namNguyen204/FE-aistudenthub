@@ -52,7 +52,7 @@ const CommunityDocuments = () => {
   const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filterOptions, setFilterOptions] = useState({ subjects: [], majors: [] });
+  const [filterOptions, setFilterOptions] = useState({ subjects: [], majors: [], documentTypes: [] });
 
   useEffect(() => {
     loadFilterOptions();
@@ -87,11 +87,12 @@ const CommunityDocuments = () => {
 
   const loadFilterOptions = async () => {
     try {
-      const options = await documentService.getFilterOptions();
+      const options = await documentService.getPublicFilterOptions();
       if (options) {
         setFilterOptions({
-          subjects: options.publicSubjects || [],
-          majors: options.publicMajors || []
+          subjects: options.subjects || [],
+          majors: options.majors || [],
+          documentTypes: options.documentTypes || []
         });
       }
     } catch (error) {
@@ -245,12 +246,11 @@ const CommunityDocuments = () => {
             value={filters.documentType}
             onChange={(e) => setFilters(prev => ({ ...prev, documentType: e.target.value }))}
           >
-            <option value="">Tất cả Định dạng</option>
-            <option value="PDF">PDF</option>
-            <option value="DOCX">Word (DOCX)</option>
-            <option value="PPTX">PowerPoint (PPTX)</option>
-            <option value="XLSX">Excel (XLSX)</option>
-            <option value="CODE">Code/Khác</option>
+            <option value="">Tất cả loại tài liệu</option>
+            {filterOptions.documentTypes.map(type => (
+              <option key={type} value={type}>{type}</option>
+            ))}
+
           </select>
           
           <select
@@ -341,7 +341,7 @@ const CommunityDocuments = () => {
                       <span className="doc-size" style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                         {formatFileSize(doc.fileSize)}
                         <span style={{ color: 'var(--primary-600)', backgroundColor: 'var(--primary-50)', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', fontWeight: 600 }}>
-                          {doc.ownerName || doc.authorName || doc.uploadedBy || doc.user?.fullName || 'Người dùng vô danh'}
+                          {doc.creatorName || doc.authorName || doc.uploadedBy || doc.user?.fullName || 'Người dùng vô danh'}
                         </span>
                       </span>
                       <div className="doc-actions" style={{ display: 'flex', gap: '16px', color: 'var(--primary-600)', fontSize: '13px', fontWeight: 600 }}>

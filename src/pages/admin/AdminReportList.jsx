@@ -1,38 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { Flag, Search, Filter, ShieldCheck, XCircle, FileText, CheckCircle, Clock } from 'lucide-react';
+import { Flag, Filter, XCircle, FileText, CheckCircle, Clock, Eye, AlertTriangle } from 'lucide-react';
 import adminService from '../../services/admin.service';
 import Button from '../../components/Button/Button';
 import Modal from '../../components/Modal/Modal';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import AdminDocumentPreviewModal from './AdminDocumentPreviewModal';
+import { VIOLATION_REASONS, getViolationReason } from '../../utils/violationReasons';
 
 const AdminReportList = () => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+
   const [filterStatus, setFilterStatus] = useState('ALL'); // PENDING, RESOLVED, DISMISSED, ALL
   const [filterReason, setFilterReason] = useState('');
-  
+
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  
+
   const [selectedReport, setSelectedReport] = useState(null);
   const [resolveModalOpen, setResolveModalOpen] = useState(false);
   const [decision, setDecision] = useState('RESOLVED');
   const [moderatorNote, setModeratorNote] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-
-  const reportReasons = [
-    { id: 'COPYRIGHT_VIOLATION', label: 'Vi phạm bản quyền' },
-    { id: 'INAPPROPRIATE_CONTENT', label: 'Nội dung không phù hợp' },
-    { id: 'SPAM', label: 'Spam/Quảng cáo' },
-    { id: 'OTHER', label: 'Khác' }
-  ];
+  const [previewDoc, setPreviewDoc] = useState(null);
 
   const getReasonLabel = (id) => {
-    const reason = reportReasons.find(r => r.id === id);
-    return reason ? reason.label : id;
+    return getViolationReason(id).label;
   };
 
   useEffect(() => {
@@ -49,7 +44,7 @@ const AdminReportList = () => {
       };
       if (filterStatus !== 'ALL') params.status = filterStatus;
       if (filterReason) params.reason = filterReason;
-      
+
       const data = await adminService.getReports(params);
       setReports(data?.content || []);
       setTotalPages(data?.totalPages || 0);
@@ -70,6 +65,10 @@ const AdminReportList = () => {
 
   const handleResolve = async () => {
     if (!decision) return;
+    if (decision === 'RESOLVED' && moderatorNote.trim().length < 20) {
+      alert('Vui lòng nhập lý do xử lý chi tiết (ít nhất 20 ký tự) để người tải lên hiểu rõ vi phạm.');
+      return;
+    }
     setIsProcessing(true);
     try {
       const reportId = selectedReport.reportId || selectedReport.id;
@@ -93,8 +92,8 @@ const AdminReportList = () => {
 
       {/* Navigation Tabs */}
       <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
-        <button 
-          onClick={() => { setFilterStatus('ALL'); setPage(0); }} 
+        <button
+          onClick={() => { setFilterStatus('ALL'); setPage(0); }}
           style={{
             padding: '0.6rem 1.2rem',
             borderRadius: '8px',
@@ -112,8 +111,8 @@ const AdminReportList = () => {
         >
           <Flag size={18} /> Tất cả Báo cáo
         </button>
-        <button 
-          onClick={() => { setFilterStatus('PENDING'); setPage(0); }} 
+        <button
+          onClick={() => { setFilterStatus('PENDING'); setPage(0); }}
           style={{
             padding: '0.6rem 1.2rem',
             borderRadius: '8px',
@@ -123,7 +122,7 @@ const AdminReportList = () => {
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            backgroundColor: filterStatus === 'PENDING' ? 'var(--warning-500)' : '#ffffff',
+            backgroundColor: filterStatus === 'PENDING' ? 'var(--primary-600)' : '#ffffff',
             color: filterStatus === 'PENDING' ? '#ffffff' : 'var(--neutral-700)',
             boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
             whiteSpace: 'nowrap'
@@ -131,8 +130,8 @@ const AdminReportList = () => {
         >
           <Clock size={18} /> Chờ xử lý
         </button>
-        <button 
-          onClick={() => { setFilterStatus('RESOLVED'); setPage(0); }} 
+        <button
+          onClick={() => { setFilterStatus('RESOLVED'); setPage(0); }}
           style={{
             padding: '0.6rem 1.2rem',
             borderRadius: '8px',
@@ -142,7 +141,7 @@ const AdminReportList = () => {
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            backgroundColor: filterStatus === 'RESOLVED' ? 'var(--error-600)' : '#ffffff',
+            backgroundColor: filterStatus === 'RESOLVED' ? 'var(--primary-600)' : '#ffffff',
             color: filterStatus === 'RESOLVED' ? '#ffffff' : 'var(--neutral-700)',
             boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
             whiteSpace: 'nowrap'
@@ -150,8 +149,8 @@ const AdminReportList = () => {
         >
           <CheckCircle size={18} /> Đã gỡ tài liệu
         </button>
-        <button 
-          onClick={() => { setFilterStatus('DISMISSED'); setPage(0); }} 
+        <button
+          onClick={() => { setFilterStatus('DISMISSED'); setPage(0); }}
           style={{
             padding: '0.6rem 1.2rem',
             borderRadius: '8px',
@@ -161,7 +160,7 @@ const AdminReportList = () => {
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            backgroundColor: filterStatus === 'DISMISSED' ? 'var(--neutral-500)' : '#ffffff',
+            backgroundColor: filterStatus === 'DISMISSED' ? 'var(--primary-600)' : '#ffffff',
             color: filterStatus === 'DISMISSED' ? '#ffffff' : 'var(--neutral-700)',
             boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
             whiteSpace: 'nowrap'
@@ -175,14 +174,14 @@ const AdminReportList = () => {
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', alignItems: 'center' }}>
           <div className="header-search" style={{ flex: 1, backgroundColor: 'var(--neutral-50)', border: '1px solid var(--neutral-200)', borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center' }}>
             <Filter size={18} color="var(--neutral-400)" style={{ marginLeft: '1rem' }} />
-            <select 
-              className="form-control" 
+            <select
+              className="form-control"
               style={{ padding: '0.75rem', width: '100%', border: 'none', backgroundColor: 'transparent', outline: 'none', color: 'var(--neutral-700)' }}
               value={filterReason}
               onChange={(e) => { setFilterReason(e.target.value); setPage(0); }}
             >
               <option value="">Tất cả lý do vi phạm</option>
-              {reportReasons.map(r => (
+              {VIOLATION_REASONS.map(r => (
                 <option key={r.id} value={r.id}>{r.label}</option>
               ))}
             </select>
@@ -267,6 +266,9 @@ const AdminReportList = () => {
                       </td>
                       <td style={{ padding: '1rem 0.5rem' }}>
                         <div style={{ fontWeight: 500 }}>{getReasonLabel(report.reason)}</div>
+                        <div style={{ fontSize: '11px', color: 'var(--neutral-500)', marginTop: '3px', maxWidth: '240px' }}>
+                          {getViolationReason(report.reason).guidance}
+                        </div>
                         {report.description && (
                           <div style={{ fontSize: '12px', color: 'var(--neutral-500)', marginTop: '4px', maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={report.description}>
                             {report.description}
@@ -291,11 +293,22 @@ const AdminReportList = () => {
                         </span>
                       </td>
                       <td style={{ padding: '1rem 0.5rem', textAlign: 'right' }}>
-                        {report.status === 'PENDING' && (
-                          <Button variant="outline" style={{ padding: '6px 12px', fontSize: '13px' }} onClick={() => openResolveModal(report)}>
-                            Xử lý
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                          <Button variant="outline" style={{ padding: '6px 10px', fontSize: '13px' }} onClick={() => setPreviewDoc({
+                            id: report.documentId,
+                            title: report.documentTitle || `Tài liệu #${report.documentId}`,
+                            uploaderFullName: report.uploaderName,
+                            uploaderEmail: report.uploaderEmail,
+                            reports: [report]
+                          })}>
+                            <Eye size={15} /> Xem
                           </Button>
-                        )}
+                          {report.status === 'PENDING' && (
+                            <Button variant="outline" style={{ padding: '6px 12px', fontSize: '13px' }} onClick={() => openResolveModal(report)}>
+                              Xử lý
+                            </Button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -306,7 +319,7 @@ const AdminReportList = () => {
         )}
       </div>
 
-      <Modal 
+      <Modal
         isOpen={resolveModalOpen}
         onClose={() => setResolveModalOpen(false)}
         title="Xử lý báo cáo vi phạm"
@@ -324,6 +337,9 @@ const AdminReportList = () => {
               <p style={{ margin: '0 0 4px 0', fontSize: '14px', color: 'var(--neutral-700)' }}><strong>Tài liệu:</strong> {selectedReport.documentTitle || selectedReport.documentId}</p>
               <p style={{ margin: '0 0 4px 0', fontSize: '14px', color: 'var(--neutral-700)' }}><strong>Lý do:</strong> {getReasonLabel(selectedReport.reason)}</p>
               <p style={{ margin: 0, fontSize: '14px', color: 'var(--neutral-700)' }}><strong>Mô tả:</strong> {selectedReport.description || 'Không có'}</p>
+              <p style={{ margin: '8px 0 0', fontSize: '13px', color: 'var(--neutral-600)', display: 'flex', gap: '6px' }}>
+                <AlertTriangle size={16} /> Tiêu chí: {getViolationReason(selectedReport.reason).guidance}
+              </p>
             </div>
 
             <div>
@@ -347,11 +363,11 @@ const AdminReportList = () => {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>Ghi chú (Tùy chọn)</label>
-              <textarea 
-                className="form-control" 
-                style={{ width: '100%', minHeight: '80px', padding: '12px', borderRadius: '8px', border: '1px solid var(--neutral-300)' }} 
-                placeholder="Ghi chú thêm về quyết định này..."
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>Ghi chú của Moderator (Tùy chọn)</label>
+              <textarea
+                className="form-control"
+                style={{ width: '100%', minHeight: '80px', padding: '12px', borderRadius: '8px', border: '1px solid var(--neutral-300)' }}
+                placeholder="Nêu rõ nội dung vi phạm, bằng chứng/vị trí và hành động xử lý để người tải lên có thể khắc phục..."
                 value={moderatorNote}
                 onChange={(e) => setModeratorNote(e.target.value)}
               />
@@ -359,6 +375,11 @@ const AdminReportList = () => {
           </div>
         )}
       </Modal>
+      <AdminDocumentPreviewModal
+        isOpen={!!previewDoc}
+        onClose={() => setPreviewDoc(null)}
+        document={previewDoc}
+      />
     </div>
   );
 };

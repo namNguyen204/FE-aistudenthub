@@ -483,6 +483,11 @@ const DocumentSearch = () => {
                             {doc.approvalStatus === 'DMCA_TAKEN_DOWN' && <span className="doc-badge" style={{ backgroundColor: 'var(--error-500)', color: 'white', padding: '2px 8px', fontSize: '11px', borderRadius: '12px' }} title={`Lý do: ${doc.rejectionReason || 'Vi phạm bản quyền'}`}>Gỡ bỏ bản quyền</span>}
                           </div>
                         )}
+                        {['REJECTED', 'DMCA_TAKEN_DOWN'].includes(doc.approvalStatus) && (
+                          <div style={{ marginTop: '8px', padding: '8px 10px', borderRadius: '8px', backgroundColor: 'var(--error-50)', color: 'var(--error-700)', fontSize: '12px', lineHeight: 1.45 }}>
+                            <strong>Lý do vi phạm:</strong> {doc.rejectionReason || doc.moderatorNote || 'Tài liệu không đáp ứng chính sách nội dung. Vui lòng liên hệ quản trị viên để biết thêm chi tiết.'}
+                          </div>
+                        )}
                       </div>
                     </div>
 

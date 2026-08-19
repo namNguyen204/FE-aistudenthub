@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CreditCard, Zap, Crown, CheckCircle2, BookOpen, Check, X } from 'lucide-react';
 import Button from '../../../components/Button/Button';
 import paymentService from '../../../services/payment.service';
@@ -68,22 +68,55 @@ const PACKAGES = [
 
 const PaymentPackage = () => {
   const { user } = useAuth();
+  const [packages, setPackages] = useState(PACKAGES);
   const [selectedPkg, setSelectedPkg] = useState(PACKAGES[1]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
 
-  const handlePayment = async () => {
+  useEffect(() => {
+    const loadPackages = async () => {
+      try {
+        const remotePackages = await paymentService.getPackages();
+        if (!Array.isArray(remotePackages) || remotePackages.length === 0) return;
+        const merged = PACKAGES.map((basePackage) => {
+          const remote = remotePackages.find((item) =>
+            String(item.id || item.code || item.tier).toLowerCase() === basePackage.id
+          );
+          if (!remote) return basePackage;
+          const price = Number(remote.price ?? remote.amount ?? basePackage.price);
+          return {
+            ...basePackage,
+            ...remote,
+            id: basePackage.id,
+            icon: basePackage.icon,
+            color: basePackage.color,
+            features: Array.isArray(remote.features) ? remote.features : basePackage.features,
+            price,
+            priceStr: price === 0 ? 'Miễn phí' : `${price.toLocaleString('vi-VN')}đ`
+          };
+        });
+        setPackages(merged);
+        setSelectedPkg((current) => merged.find((item) => item.id === current.id) || merged[1]);
+      } catch (err) {
+        console.warn('Không thể tải bảng giá động, tạm dùng bảng giá mặc định.', err);
+      }
+    };
+    loadPackages();
+  }, []);
+
+  const handlePayment = async (packageToBuy = selectedPkg) => {
+    const targetPackage = packageToBuy || selectedPkg;
     if (user?.subscriptionTier === 'PREMIUM') {
       setError('Tài khoản của bạn đã có gói Chuyên gia (Premium). Bạn không thể mua thêm do hạn sử dụng là 30 ngày/1 gói.');
       return;
     }
 
-    if (user?.subscriptionTier === 'PRO' && selectedPkg.id === 'pro') {
+    if (user?.subscriptionTier === 'PRO' && targetPackage.id === 'pro') {
       setError('Tài khoản của bạn đã có gói Nâng cao (Pro). Bạn chỉ có thể nâng cấp lên gói Chuyên gia.');
       return;
     }
 
-    if (user?.subscriptionTier === 'BASIC' && selectedPkg.id === 'basic') {
+    if (user?.subscriptionTier === 'BASIC' && targetPackage.id === 'basic') {
       setError('Bạn đang sử dụng gói Cơ bản.');
       return;
     }
@@ -93,10 +126,10 @@ const PaymentPackage = () => {
     try {
       const returnUrl = `${window.location.origin}/dashboard/payment/success`;
       const cancelUrl = `${window.location.origin}/dashboard/payment/cancel`;
-      const description = `Mua ${selectedPkg.name}`;
+      const description = `Mua ${targetPackage.name}`;
 
       const response = await paymentService.createPayment(
-        selectedPkg.price,
+        targetPackage.price,
         description,
         returnUrl,
         cancelUrl
@@ -149,7 +182,7 @@ const PaymentPackage = () => {
 
       <div className="packages-grid">
 
-        {PACKAGES.map((pkg) => {
+        {packages.map((pkg) => {
           const isSelected = selectedPkg.id === pkg.id;
           
           let isDisabled = isProcessing || pkg.id === 'basic';
@@ -260,7 +293,7 @@ const PaymentPackage = () => {
             <Button
               variant="primary"
               size="lg"
-              onClick={handlePayment}
+              onClick={() => handlePayment()}
               disabled={isDisabled}
               style={{ minWidth: '250px', fontSize: '1.1rem' }}
             >

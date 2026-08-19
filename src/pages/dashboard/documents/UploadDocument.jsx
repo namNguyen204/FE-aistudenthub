@@ -421,6 +421,9 @@ const UploadDocument = () => {
                 Công khai (Chia sẻ với mọi người)
               </label>
             </div>
+            <p className="visibility-notice">
+              Tài liệu công khai sẽ được AI tự động quét nội dung trước khi gửi duyệt. Không đăng nội dung 18+, bạo lực, thông tin cá nhân nhạy cảm, mã độc hoặc spam/quảng cáo không liên quan học thuật. Tài liệu vi phạm có thể bị gỡ tự động và bạn sẽ nhận email nêu rõ lý do.
+            </p>
           </div>
 
           <div className="upload-actions">

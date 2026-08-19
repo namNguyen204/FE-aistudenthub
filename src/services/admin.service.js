@@ -55,6 +55,29 @@ const adminService = {
     return response.data?.data;
   },
 
+  getViolationStats: async () => {
+    try {
+      const response = await api.get('/admin/reports/stats');
+      return response.data?.data;
+    } catch {
+      try {
+        const statuses = ['PENDING', 'RESOLVED', 'DISMISSED'];
+        const responses = await Promise.all(statuses.map((status) =>
+          api.get(`/admin/reports?status=${status}&page=0&size=1`)
+        ));
+        const counts = responses.map((response) => Number(response.data?.data?.totalElements || 0));
+        return {
+          totalReports: counts.reduce((sum, count) => sum + count, 0),
+          pendingReports: counts[0],
+          resolvedReports: counts[1],
+          dismissedReports: counts[2]
+        };
+      } catch {
+        return { totalReports: 0, pendingReports: 0, resolvedReports: 0, dismissedReports: 0 };
+      }
+    }
+  },
+
   // ---- System Config ----
   getAllConfigs: async () => {
     const response = await api.get('/admin/system-config');
@@ -113,12 +136,12 @@ const adminService = {
   },
 
   approveDocument: async (id) => {
-    const response = await api.post(`/admin/documents/${id}/approve`);
+    const response = await api.post(`/moderator/dashboard/approve`, { documentId: id });
     return response.data;
   },
 
   rejectDocument: async (id, reason) => {
-    const response = await api.post(`/admin/documents/${id}/reject`, { reason });
+    const response = await api.post(`/moderator/dashboard/reject`, { documentId: id, reason });
     return response.data;
   },
 
@@ -135,7 +158,7 @@ const adminService = {
     const searchParams = new URLSearchParams({ page, size });
     if (status) searchParams.append('status', status);
     if (reason) searchParams.append('reason', reason);
-    
+
     const response = await api.get(`/admin/reports?${searchParams.toString()}`);
     return response.data?.data;
   },

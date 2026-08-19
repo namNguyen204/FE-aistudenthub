@@ -1,9 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import { Users, Search, Edit2, Trash2, Power, PowerOff, AlertCircle, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Trash2, Power, PowerOff, AlertCircle, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import adminService from '../../services/admin.service';
 import Button from '../../components/Button/Button';
 import Modal from '../../components/Modal/Modal';
 import ConfirmDeleteModal from '../../components/Modal/ConfirmDeleteModal';
+
+// Ánh xạ planName từ BE → style badge tương ứng
+const getPlanStyle = (planName = '', isPremium = false) => {
+  if (!isPremium) {
+    return { label: 'Cơ bản', backgroundColor: 'var(--neutral-100)', color: 'var(--neutral-600)' };
+  }
+  const name = (planName || '').toLowerCase();
+  if (name.includes('chuyên gia') || name.includes('expert')) {
+    return { label: planName || 'Chuyên gia', backgroundColor: 'var(--danger-50)', color: 'var(--danger-600)' };
+  }
+  if (name.includes('nâng cao') || name.includes('advanced') || name.includes('pro')) {
+    return { label: planName || 'Nâng cao', backgroundColor: 'var(--warning-50)', color: 'var(--warning-600)' };
+  }
+  return { label: planName || 'Premium', backgroundColor: 'var(--primary-50)', color: 'var(--primary-600)' };
+};
 
 const AdminUserList = () => {
   const [users, setUsers] = useState([]);
@@ -49,7 +64,6 @@ const AdminUserList = () => {
       setViewUserDetails(details);
     } catch (err) {
       console.error('Lỗi khi lấy chi tiết người dùng:', err);
-      // Fallback to basic user data if API fails
       setViewUserDetails(user);
     }
   };
@@ -93,9 +107,9 @@ const AdminUserList = () => {
         <form onSubmit={handleSearch} style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
           <div className="header-search" style={{ flex: 1, backgroundColor: 'var(--neutral-50)', border: '1px solid var(--neutral-200)', borderRadius: 'var(--radius-md)' }}>
             <Search size={18} color="var(--neutral-400)" style={{ marginLeft: '1rem' }} />
-            <input 
-              type="text" 
-              placeholder="Tìm kiếm theo email hoặc tên..." 
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo email hoặc tên..."
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               style={{ padding: '0.75rem', width: '100%', border: 'none', backgroundColor: 'transparent', outline: 'none' }}
@@ -132,77 +146,73 @@ const AdminUserList = () => {
                     <td colSpan="6" style={{ padding: '2rem', textAlign: 'center', color: 'var(--neutral-500)' }}>Không tìm thấy người dùng nào.</td>
                   </tr>
                 ) : (
-                  users.map(user => (
-                    <tr key={user.id} style={{ borderBottom: '1px solid var(--neutral-100)' }}>
-                      <td style={{ padding: '1rem 0.5rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--primary-100)', color: 'var(--primary-700)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
-                          {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
-                        </div>
-                        {user.fullName || 'Chưa cập nhật'}
-                      </td>
-                      <td style={{ padding: '1rem 0.5rem', color: 'var(--neutral-600)' }}>{user.email}</td>
-                      <td style={{ padding: '1rem 0.5rem' }}>
-                        <span style={{ padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '12px', fontWeight: 600, backgroundColor: user.role === 'ADMIN' ? 'var(--primary-100)' : 'var(--neutral-100)', color: user.role === 'ADMIN' ? 'var(--primary-700)' : 'var(--neutral-700)' }}>
-                          {user.role}
-                        </span>
-                      </td>
-                      <td style={{ padding: '1rem 0.5rem' }}>
-                        <span style={{ 
-                          padding: '0.25rem 0.5rem', 
-                          borderRadius: '4px', 
-                          fontSize: '12px', 
-                          fontWeight: 600, 
-                          backgroundColor: user.subscriptionTier === 'PREMIUM' ? 'var(--danger-50)' : user.subscriptionTier === 'PRO' || user.isPremium ? 'var(--warning-50)' : 'var(--neutral-100)', 
-                          color: user.subscriptionTier === 'PREMIUM' ? 'var(--danger-600)' : user.subscriptionTier === 'PRO' || user.isPremium ? 'var(--warning-600)' : 'var(--neutral-700)' 
-                        }}>
-                          {user.subscriptionTier === 'PREMIUM' ? 'Premium' : user.subscriptionTier === 'PRO' || user.isPremium ? 'Pro' : 'Free'}
-                        </span>
-                      </td>
-                      <td style={{ padding: '1rem 0.5rem' }}>
-                        {user.deletedAt ? (
-                          <span style={{ color: 'var(--error-600)', fontWeight: 500, fontSize: '14px' }}>Đã xóa</span>
-                        ) : user.active ? (
-                          <span style={{ color: 'var(--success-600)', fontWeight: 500, fontSize: '14px' }}>Hoạt động</span>
-                        ) : (
-                          <span style={{ color: 'var(--warning-600)', fontWeight: 500, fontSize: '14px' }}>Đã khóa</span>
-                        )}
-                      </td>
-                      <td style={{ padding: '1rem 0.5rem', textAlign: 'right' }}>
-                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                          <button 
-                            onClick={() => handleViewUser(user)}
-                            title="Xem chi tiết"
-                            style={{ padding: '0.5rem', borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: 'var(--primary-50)', color: 'var(--primary-600)' }}
-                          >
-                            <Eye size={16} />
-                          </button>
-                          <button 
-                            onClick={() => setToggleUser(user)}
-                            title={user.active ? "Khóa tài khoản" : "Kích hoạt tài khoản"}
-                            style={{ padding: '0.5rem', borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: user.active ? 'var(--warning-50)' : 'var(--success-50)', color: user.active ? 'var(--warning-600)' : 'var(--success-600)' }}
-                          >
-                            {user.active ? <PowerOff size={16} /> : <Power size={16} />}
-                          </button>
-                          <button 
-                            onClick={() => setDeleteUserId(user.id)}
-                            title="Xóa tài khoản"
-                            style={{ padding: '0.5rem', borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: 'var(--error-50)', color: 'var(--error-600)' }}
-                            disabled={!!user.deletedAt}
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                  users.map(user => {
+                    const plan = getPlanStyle(user.planName, user.premium);
+                    return (
+                      <tr key={user.id} style={{ borderBottom: '1px solid var(--neutral-100)' }}>
+                        <td style={{ padding: '1rem 0.5rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--primary-100)', color: 'var(--primary-700)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                            {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
+                          </div>
+                          {user.fullName || 'Chưa cập nhật'}
+                        </td>
+                        <td style={{ padding: '1rem 0.5rem', color: 'var(--neutral-600)' }}>{user.email}</td>
+                        <td style={{ padding: '1rem 0.5rem' }}>
+                          <span style={{ padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '12px', fontWeight: 600, backgroundColor: user.role === 'ADMIN' ? 'var(--primary-100)' : 'var(--neutral-100)', color: user.role === 'ADMIN' ? 'var(--primary-700)' : 'var(--neutral-700)' }}>
+                            {user.role}
+                          </span>
+                        </td>
+                        <td style={{ padding: '1rem 0.5rem' }}>
+                          <span style={{ padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '12px', fontWeight: 600, backgroundColor: plan.backgroundColor, color: plan.color }}>
+                            {plan.label}
+                          </span>
+                        </td>
+                        <td style={{ padding: '1rem 0.5rem' }}>
+                          {user.deletedAt ? (
+                            <span style={{ color: 'var(--error-600)', fontWeight: 500, fontSize: '14px' }}>Đã xóa</span>
+                          ) : user.active ? (
+                            <span style={{ color: 'var(--success-600)', fontWeight: 500, fontSize: '14px' }}>Hoạt động</span>
+                          ) : (
+                            <span style={{ color: 'var(--warning-600)', fontWeight: 500, fontSize: '14px' }}>Đã khóa</span>
+                          )}
+                        </td>
+                        <td style={{ padding: '1rem 0.5rem', textAlign: 'right' }}>
+                          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                            <button
+                              onClick={() => handleViewUser(user)}
+                              title="Xem chi tiết"
+                              style={{ padding: '0.5rem', borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: 'var(--primary-50)', color: 'var(--primary-600)' }}
+                            >
+                              <Eye size={16} />
+                            </button>
+                            <button
+                              onClick={() => setToggleUser(user)}
+                              title={user.active ? 'Khóa tài khoản' : 'Kích hoạt tài khoản'}
+                              style={{ padding: '0.5rem', borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: user.active ? 'var(--warning-50)' : 'var(--success-50)', color: user.active ? 'var(--warning-600)' : 'var(--success-600)' }}
+                            >
+                              {user.active ? <PowerOff size={16} /> : <Power size={16} />}
+                            </button>
+                            <button
+                              onClick={() => setDeleteUserId(user.id)}
+                              title="Xóa tài khoản"
+                              style={{ padding: '0.5rem', borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: 'var(--error-50)', color: 'var(--error-600)' }}
+                              disabled={!!user.deletedAt}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
-            
+
             {totalPages >= 1 && (
               <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem' }}>
-                <Button 
-                  onClick={() => setPage(prev => Math.max(0, prev - 1))} 
+                <Button
+                  onClick={() => setPage(prev => Math.max(0, prev - 1))}
                   disabled={page === 0}
                   style={{ padding: '0.5rem 0.75rem' }}
                   variant="outline"
@@ -212,8 +222,8 @@ const AdminUserList = () => {
                 <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--neutral-600)' }}>
                   Trang {page + 1} / {totalPages}
                 </span>
-                <Button 
-                  onClick={() => setPage(prev => Math.min(totalPages - 1, prev + 1))} 
+                <Button
+                  onClick={() => setPage(prev => Math.min(totalPages - 1, prev + 1))}
                   disabled={page >= totalPages - 1}
                   style={{ padding: '0.5rem 0.75rem' }}
                   variant="outline"
@@ -226,7 +236,7 @@ const AdminUserList = () => {
         )}
       </div>
 
-      <ConfirmDeleteModal 
+      <ConfirmDeleteModal
         isOpen={!!deleteUserId}
         onClose={() => setDeleteUserId(null)}
         onConfirm={confirmDeleteUser}
@@ -235,33 +245,34 @@ const AdminUserList = () => {
         message="Bạn có chắc chắn muốn xóa người dùng này? Tài khoản sẽ bị vô hiệu hóa hoàn toàn khỏi hệ thống (Xóa mềm)."
       />
 
-      <Modal 
+      <Modal
         isOpen={!!toggleUser}
         onClose={() => setToggleUser(null)}
-        title={toggleUser?.active ? "Xác nhận Khóa tài khoản" : "Xác nhận Kích hoạt tài khoản"}
+        title={toggleUser?.active ? 'Xác nhận Khóa tài khoản' : 'Xác nhận Kích hoạt tài khoản'}
         footer={
           <>
             <Button variant="outline" onClick={() => setToggleUser(null)}>Hủy</Button>
-            <Button 
-              onClick={confirmToggleStatus} 
+            <Button
+              onClick={confirmToggleStatus}
               isLoading={isProcessing}
               style={{ backgroundColor: toggleUser?.active ? 'var(--warning-600)' : 'var(--success-600)', borderColor: toggleUser?.active ? 'var(--warning-600)' : 'var(--success-600)', color: 'white' }}
             >
-              {toggleUser?.active ? "Khóa" : "Kích hoạt"}
+              {toggleUser?.active ? 'Khóa' : 'Kích hoạt'}
             </Button>
           </>
         }
       >
         <div style={{ color: 'var(--neutral-600)', fontSize: '14px', lineHeight: '1.5' }}>
-          Bạn có chắc chắn muốn {toggleUser?.active ? "khóa" : "kích hoạt"} tài khoản <strong>{toggleUser?.email}</strong>?
+          Bạn có chắc chắn muốn {toggleUser?.active ? 'khóa' : 'kích hoạt'} tài khoản <strong>{toggleUser?.email}</strong>?
           <br /><br />
-          {toggleUser?.active 
-            ? "Tài khoản bị khóa sẽ không thể đăng nhập và truy cập vào hệ thống nữa." 
-            : "Tài khoản sẽ được hoạt động bình thường trở lại."}
+          {toggleUser?.active
+            ? 'Tài khoản bị khóa sẽ không thể đăng nhập và truy cập vào hệ thống nữa.'
+            : 'Tài khoản sẽ được hoạt động bình thường trở lại.'}
         </div>
       </Modal>
 
-      <Modal 
+      {/* Modal chi tiết user */}
+      <Modal
         isOpen={!!viewUser}
         onClose={() => { setViewUser(null); setViewUserDetails(null); }}
         title="Hồ sơ Người dùng"
@@ -271,6 +282,7 @@ const AdminUserList = () => {
       >
         {viewUserDetails ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {/* Avatar + name */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', paddingBottom: '1rem', borderBottom: '1px solid var(--neutral-100)' }}>
               <div style={{ width: '64px', height: '64px', borderRadius: '50%', backgroundColor: 'var(--primary-100)', color: 'var(--primary-700)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', fontWeight: 'bold' }}>
                 {viewUserDetails.fullName ? viewUserDetails.fullName.charAt(0).toUpperCase() : 'U'}
@@ -283,24 +295,45 @@ const AdminUserList = () => {
                 </span>
               </div>
             </div>
-            
+
+            {/* Info grid */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div>
-                <p style={{ margin: '0 0 0.25rem 0', fontSize: '12px', color: 'var(--neutral-500)', fontWeight: 500 }}>SỐ ĐIỆN THOẠI</p>
-                <p style={{ margin: 0, color: 'var(--neutral-800)', fontWeight: 500 }}>{viewUserDetails.phoneNumber || 'Trống'}</p>
-              </div>
               <div>
                 <p style={{ margin: '0 0 0.25rem 0', fontSize: '12px', color: 'var(--neutral-500)', fontWeight: 500 }}>NGÀY THAM GIA</p>
                 <p style={{ margin: 0, color: 'var(--neutral-800)', fontWeight: 500 }}>
                   {viewUserDetails.createdAt ? new Date(viewUserDetails.createdAt).toLocaleDateString('vi-VN') : 'Không rõ'}
                 </p>
               </div>
+
               <div>
                 <p style={{ margin: '0 0 0.25rem 0', fontSize: '12px', color: 'var(--neutral-500)', fontWeight: 500 }}>GÓI ĐĂNG KÝ</p>
-                <p style={{ margin: 0, color: 'var(--neutral-800)', fontWeight: 500 }}>
-                  {viewUserDetails.subscriptionTier === 'PREMIUM' ? 'Premium' : viewUserDetails.subscriptionTier === 'PRO' || viewUserDetails.isPremium ? 'Pro' : 'Free'}
+                <p style={{ margin: 0 }}>
+                  {(() => {
+                    const plan = getPlanStyle(viewUserDetails.planName, viewUserDetails.premium);
+                    return (
+                      <span style={{ padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '13px', fontWeight: 600, backgroundColor: plan.backgroundColor, color: plan.color }}>
+                        {plan.label}
+                      </span>
+                    );
+                  })()}
                 </p>
               </div>
+
+              {/* Hiển thị ngày hết hạn và số ngày còn lại nếu là premium */}
+              {viewUserDetails.premium && viewUserDetails.planExpiredAt && (
+                <div>
+                  <p style={{ margin: '0 0 0.25rem 0', fontSize: '12px', color: 'var(--neutral-500)', fontWeight: 500 }}>HẾT HẠN</p>
+                  <p style={{ margin: 0, color: 'var(--neutral-800)', fontWeight: 500 }}>
+                    {new Date(viewUserDetails.planExpiredAt).toLocaleDateString('vi-VN')}
+                    {viewUserDetails.daysRemaining > 0 && (
+                      <span style={{ marginLeft: '0.5rem', fontSize: '12px', color: 'var(--success-600)', fontWeight: 600 }}>
+                        (còn {viewUserDetails.daysRemaining} ngày)
+                      </span>
+                    )}
+                  </p>
+                </div>
+              )}
+
               <div style={{ gridColumn: 'span 2' }}>
                 <p style={{ margin: '0 0 0.25rem 0', fontSize: '12px', color: 'var(--neutral-500)', fontWeight: 500 }}>TRẠNG THÁI TÀI KHOẢN</p>
                 <p style={{ margin: 0, fontWeight: 500, color: viewUserDetails.deletedAt ? 'var(--error-600)' : viewUserDetails.active ? 'var(--success-600)' : 'var(--warning-600)' }}>
@@ -315,7 +348,6 @@ const AdminUserList = () => {
           </div>
         )}
       </Modal>
-
     </div>
   );
 };

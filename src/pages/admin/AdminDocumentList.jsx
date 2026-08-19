@@ -27,6 +27,84 @@ const AdminDocumentList = () => {
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [docToReject, setDocToReject] = useState(null);
+
+  const renderStatusBadge = (doc) => {
+    const docStatus = doc.approvalStatus || (doc.visibility === 'PUBLIC' ? 'APPROVED' : 'PRIVATE');
+
+    switch (docStatus) {
+      case 'PENDING':
+        return (
+          <span style={{
+            padding: '4px 10px',
+            borderRadius: '12px',
+            fontSize: '12px',
+            fontWeight: 600,
+            backgroundColor: 'var(--warning-50, #fef3c7)',
+            color: 'var(--warning-700, #b45309)',
+            display: 'inline-block'
+          }}>
+            Chờ duyệt
+          </span>
+        );
+      case 'APPROVED':
+        return (
+          <span style={{
+            padding: '4px 10px',
+            borderRadius: '12px',
+            fontSize: '12px',
+            fontWeight: 600,
+            backgroundColor: 'var(--success-50, #ecfdf5)',
+            color: 'var(--success-700, #047857)',
+            display: 'inline-block'
+          }}>
+            Đã duyệt
+          </span>
+        );
+      case 'REJECTED':
+        return (
+          <span style={{
+            padding: '4px 10px',
+            borderRadius: '12px',
+            fontSize: '12px',
+            fontWeight: 600,
+            backgroundColor: 'var(--error-50, #fef2f2)',
+            color: 'var(--error-700, #b91c1c)',
+            display: 'inline-block'
+          }} title={doc.rejectionReason ? `Lý do: ${doc.rejectionReason}` : ''}>
+            Bị từ chối
+          </span>
+        );
+      case 'DMCA_TAKEN_DOWN':
+        return (
+          <span style={{
+            padding: '4px 10px',
+            borderRadius: '12px',
+            fontSize: '12px',
+            fontWeight: 600,
+            backgroundColor: 'var(--error-100, #fee2e2)',
+            color: 'var(--error-800, #991b1b)',
+            display: 'inline-block'
+          }} title="Bị gỡ bỏ do vi phạm bản quyền (DMCA)">
+            Gỡ bỏ (DMCA)
+          </span>
+        );
+      case 'PRIVATE':
+      default:
+        return (
+          <span style={{
+            padding: '4px 10px',
+            borderRadius: '12px',
+            fontSize: '12px',
+            fontWeight: 600,
+            backgroundColor: 'var(--neutral-100, #f3f4f6)',
+            color: 'var(--neutral-600, #4b5563)',
+            display: 'inline-block'
+          }}>
+            Riêng tư
+          </span>
+        );
+    }
+  };
   
   const handleApprove = async (id) => {
     setIsProcessing(true);
@@ -165,9 +243,9 @@ const AdminDocumentList = () => {
   };
 
   const filteredDocuments = documents.filter(doc => {
-    const status = doc.approvalStatus || doc.status || (doc.visibility === 'PUBLIC' ? 'APPROVED' : 'PENDING');
-    if (activeTab === 'PENDING') return status === 'PENDING' || doc.processingStatus === 'PENDING';
-    if (activeTab === 'APPROVED') return status === 'APPROVED' || doc.visibility === 'PUBLIC';
+    const status = doc.approvalStatus || doc.status || (doc.visibility === 'PUBLIC' ? 'APPROVED' : 'PRIVATE');
+    if (activeTab === 'PENDING') return doc.visibility === 'PUBLIC' && (status === 'PENDING' || doc.processingStatus === 'PENDING');
+    if (activeTab === 'APPROVED') return doc.visibility === 'PUBLIC' && status === 'APPROVED';
     if (activeTab === 'REJECTED') return status === 'REJECTED';
     return true;
   });
@@ -215,7 +293,7 @@ const AdminDocumentList = () => {
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            backgroundColor: activeTab === 'PENDING' ? 'var(--warning-500)' : '#ffffff',
+            backgroundColor: activeTab === 'PENDING' ? 'var(--primary-600)' : '#ffffff',
             color: activeTab === 'PENDING' ? '#ffffff' : 'var(--neutral-700)',
             boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
             whiteSpace: 'nowrap'
@@ -234,7 +312,7 @@ const AdminDocumentList = () => {
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            backgroundColor: activeTab === 'APPROVED' ? 'var(--success-600)' : '#ffffff',
+            backgroundColor: activeTab === 'APPROVED' ? 'var(--primary-600)' : '#ffffff',
             color: activeTab === 'APPROVED' ? '#ffffff' : 'var(--neutral-700)',
             boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
             whiteSpace: 'nowrap'
@@ -253,7 +331,7 @@ const AdminDocumentList = () => {
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            backgroundColor: activeTab === 'REJECTED' ? 'var(--danger-500)' : '#ffffff',
+            backgroundColor: activeTab === 'REJECTED' ? 'var(--primary-600)' : '#ffffff',
             color: activeTab === 'REJECTED' ? '#ffffff' : 'var(--neutral-700)',
             boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
             whiteSpace: 'nowrap'
@@ -296,7 +374,7 @@ const AdminDocumentList = () => {
                 <tr style={{ borderBottom: '2px solid var(--neutral-200)', color: 'var(--neutral-600)' }}>
                   <th style={{ padding: '1rem 0.5rem' }}>Tên tài liệu</th>
                   <th style={{ padding: '1rem 0.5rem' }}>Người đăng</th>
-                  <th style={{ padding: '1rem 0.5rem' }}>Chế độ chia sẻ</th>
+                  <th style={{ padding: '1rem 0.5rem' }}>Trạng thái</th>
                   <th style={{ padding: '1rem 0.5rem' }}>Môn học</th>
                   <th style={{ padding: '1rem 0.5rem' }}>Thời gian</th>
                   <th style={{ padding: '1rem 0.5rem', textAlign: 'right' }}>Thao tác</th>
@@ -322,7 +400,7 @@ const AdminDocumentList = () => {
                 <tr style={{ borderBottom: '2px solid var(--neutral-200)', color: 'var(--neutral-600)' }}>
                   <th style={{ padding: '1rem 0.5rem' }}>Tên tài liệu</th>
                   <th style={{ padding: '1rem 0.5rem' }}>Người đăng</th>
-                  <th style={{ padding: '1rem 0.5rem' }}>Chế độ chia sẻ</th>
+                  <th style={{ padding: '1rem 0.5rem' }}>Trạng thái</th>
                   <th style={{ padding: '1rem 0.5rem' }}>Môn học</th>
                   <th style={{ padding: '1rem 0.5rem' }}>Thời gian</th>
                   <th style={{ padding: '1rem 0.5rem', textAlign: 'right' }}>Thao tác</th>
@@ -331,7 +409,7 @@ const AdminDocumentList = () => {
               <tbody>
                 {filteredDocuments.length === 0 ? (
                   <tr>
-                    <td colSpan="6" style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--neutral-500)', backgroundColor: '#ffffff' }}>
+                    <td colSpan={6} style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--neutral-500)', backgroundColor: '#ffffff' }}>
                       <div style={{ width: '64px', height: '64px', margin: '0 auto 1rem', backgroundColor: 'var(--neutral-50)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Search size={32} color="var(--neutral-400)" />
                       </div>
@@ -340,85 +418,97 @@ const AdminDocumentList = () => {
                     </td>
                   </tr>
                 ) : (
-                  filteredDocuments.map(doc => (
-                    <tr key={doc.id} style={{ borderBottom: '1px solid var(--neutral-100)' }}>
-                      <td style={{ padding: '1rem 0.5rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        {getFileIcon(doc.fileType)}
-                        <span style={{ maxWidth: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {doc.title}
-                        </span>
-                      </td>
-                      <td style={{ padding: '1rem 0.5rem', color: 'var(--neutral-600)' }}>{doc.ownerName || doc.authorName || doc.uploadedBy || doc.user?.fullName || 'Người dùng vô danh'}</td>
-                      <td style={{ padding: '1rem 0.5rem' }}>
-                        <span style={{
-                          padding: '4px 10px',
-                          borderRadius: '12px',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          backgroundColor: doc.visibility === 'PUBLIC' ? 'var(--success-50, #ecfdf5)' : 'var(--neutral-100)',
-                          color: doc.visibility === 'PUBLIC' ? 'var(--success-600, #059669)' : 'var(--neutral-600)'
-                        }}>
-                          {doc.visibility === 'PUBLIC' ? 'Public' : 'Private'}
-                        </span>
-                      </td>
-                      <td style={{ padding: '1rem 0.5rem', color: 'var(--neutral-600)' }}>{doc.subject || '-'}</td>
-                      <td style={{ padding: '1rem 0.5rem', color: 'var(--neutral-600)' }}>
-                        {doc.createdAt ? formatDistanceToNow(new Date(doc.createdAt), { addSuffix: true, locale: vi }) : '-'}
-                      </td>
-                      <td style={{ padding: '1rem 0.5rem', textAlign: 'right' }}>
-                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                          <button 
-                            title="Xem trước tài liệu (Admin Preview)"
-                            onClick={() => setPreviewDoc(doc)}
-                            style={{ padding: '0.5rem', borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: 'var(--primary-100)', color: 'var(--primary-700)' }}
-                          >
-                            <Eye size={16} />
-                          </button>
-                          <button 
-                            title="Xem trạng thái xử lý"
-                            onClick={() => handleViewStatus(doc)}
-                            style={{ padding: '0.5rem', borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: 'var(--neutral-100)', color: 'var(--neutral-700)' }}
-                          >
-                            <Activity size={16} />
-                          </button>
-                          {activeTab === 'PENDING' && (
-                            <>
+                  filteredDocuments.map(doc => {
+                    const docStatus = doc.approvalStatus || (doc.visibility === 'PUBLIC' ? 'APPROVED' : 'PRIVATE');
+                    const isPendingApproval = doc.visibility === 'PUBLIC' && (docStatus === 'PENDING' || doc.processingStatus === 'PENDING');
+                    const isApprovedPublic = doc.visibility === 'PUBLIC' && docStatus === 'APPROVED';
+
+                    return (
+                      <tr key={doc.id} style={{ borderBottom: '1px solid var(--neutral-100)' }}>
+                        <td style={{ padding: '1rem 0.5rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          {getFileIcon(doc.fileType)}
+                          <span style={{ maxWidth: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {doc.title}
+                          </span>
+                        </td>
+                        <td style={{ padding: '1rem 0.5rem', color: 'var(--neutral-600)' }}>{doc.uploaderFullName || doc.ownerName || doc.authorName || doc.uploadedBy || doc.user?.fullName || doc.uploaderEmail || 'Người dùng vô danh'}</td>
+                        <td style={{ padding: '1rem 0.5rem' }}>
+                          {renderStatusBadge(doc)}
+                        </td>
+                        <td style={{ padding: '1rem 0.5rem', color: 'var(--neutral-600)' }}>{doc.subject || '-'}</td>
+                        <td style={{ padding: '1rem 0.5rem', color: 'var(--neutral-600)' }}>
+                          {doc.createdAt ? formatDistanceToNow(new Date(doc.createdAt), { addSuffix: true, locale: vi }) : '-'}
+                        </td>
+                          <td style={{ padding: '1rem 0.5rem', textAlign: 'right' }}>
+                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                              {/* Nút Xem (Eye) - luôn luôn hiển thị */}
                               <button 
-                                title="Duyệt tài liệu (Approve)"
-                                onClick={() => handleApprove(doc.id)}
-                                style={{ padding: '0.5rem', borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: 'var(--success-50)', color: 'var(--success-600)' }}
+                                title="Xem trước tài liệu (Admin Preview)"
+                                onClick={() => setPreviewDoc(doc)}
+                                style={{ padding: '0.5rem', borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: 'var(--primary-100)', color: 'var(--primary-700)' }}
                               >
-                                <Globe size={16} />
+                                <Eye size={16} />
                               </button>
-                              <button 
-                                title="Từ chối tài liệu (Reject)"
-                                onClick={() => openRejectModal(doc)}
-                                style={{ padding: '0.5rem', borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: 'var(--warning-50)', color: 'var(--warning-600)' }}
-                              >
-                                <AlertCircle size={16} />
-                              </button>
-                            </>
-                          )}
-                          {doc.visibility === 'PUBLIC' && doc.approvalStatus !== 'DMCA_TAKEN_DOWN' && (
-                            <button 
-                              title="Gỡ bỏ khẩn cấp (DMCA)"
-                              onClick={() => handleDmcaTakedown(doc.id)}
-                              style={{ padding: '0.5rem', borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: 'var(--error-100)', color: 'var(--error-700)' }}
-                            >
-                              <AlertCircle size={16} />
-                            </button>
-                          )}
-                          <button 
-                            title="Xóa tài liệu"
-                            onClick={() => setDeleteDocId(doc.id)}
-                            style={{ padding: '0.5rem', borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: 'var(--error-50)', color: 'var(--error-600)' }}
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+
+                              {/* Cấu hình hiển thị nút thao tác theo từng Tab */}
+                              {activeTab === 'PENDING' && (
+                                <>
+                                  <button 
+                                    title="Xem trạng thái xử lý"
+                                    onClick={() => handleViewStatus(doc)}
+                                    style={{ padding: '0.5rem', borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: 'var(--neutral-100)', color: 'var(--neutral-700)' }}
+                                  >
+                                    <Activity size={16} />
+                                  </button>
+                                  <button 
+                                    title="Duyệt tài liệu (Approve)"
+                                    onClick={() => handleApprove(doc.id)}
+                                    style={{ padding: '0.5rem', borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: 'var(--success-50)', color: 'var(--success-600)' }}
+                                  >
+                                    <Globe size={16} />
+                                  </button>
+                                  <button 
+                                    title="Từ chối tài liệu (Reject)"
+                                    onClick={() => openRejectModal(doc)}
+                                    style={{ padding: '0.5rem', borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: 'var(--warning-50)', color: 'var(--warning-600)' }}
+                                  >
+                                    <AlertCircle size={16} />
+                                  </button>
+                                  <button 
+                                    title="Xóa tài liệu"
+                                    onClick={() => setDeleteDocId(doc.id)}
+                                    style={{ padding: '0.5rem', borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: 'var(--error-50)', color: 'var(--error-600)' }}
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                </>
+                              )}
+
+                              {activeTab === 'APPROVED' && (
+                                <>
+                                  <button 
+                                    title="Gỡ bỏ khẩn cấp (DMCA)"
+                                    onClick={() => handleDmcaTakedown(doc.id)}
+                                    style={{ padding: '0.5rem', borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: 'var(--error-100)', color: 'var(--error-700)' }}
+                                  >
+                                    <AlertCircle size={16} />
+                                  </button>
+                                  <button 
+                                    title="Xóa tài liệu"
+                                    onClick={() => setDeleteDocId(doc.id)}
+                                    style={{ padding: '0.5rem', borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: 'var(--error-50)', color: 'var(--error-600)' }}
+                                  >
+                                    <Trash2 size={16} />
+                                  </button>
+                                </>
+                              )}
+
+                              {activeTab === 'REJECTED' && null}
+                            </div>
+                          </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>

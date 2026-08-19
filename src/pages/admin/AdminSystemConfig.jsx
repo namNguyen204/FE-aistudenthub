@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Save, Server, AlertCircle } from 'lucide-react';
+import { Shield, Save, Server, AlertCircle, DollarSign } from 'lucide-react';
 import adminService from '../../services/admin.service';
 import Button from '../../components/Button/Button';
 
@@ -34,6 +34,8 @@ const AdminSystemConfig = () => {
         configObj['feature.upload.enabled'] = true;
         configObj['system.maintenance_mode'] = false;
       }
+      configObj['package.pro.price'] ??= '39000';
+      configObj['package.premium.price'] ??= '79000';
       
       setConfigs(configObj);
     } catch (err) {
@@ -43,7 +45,9 @@ const AdminSystemConfig = () => {
       setConfigs({
         'feature.ai_chat.enabled': true,
         'feature.upload.enabled': true,
-        'system.maintenance_mode': false
+        'system.maintenance_mode': false,
+        'package.pro.price': '39000',
+        'package.premium.price': '79000'
       });
     } finally {
       setLoading(false);
@@ -63,6 +67,12 @@ const AdminSystemConfig = () => {
   };
 
   const handleSave = async () => {
+    const proPrice = Number(configs['package.pro.price']);
+    const premiumPrice = Number(configs['package.premium.price']);
+    if (!Number.isInteger(proPrice) || proPrice < 1000 || !Number.isInteger(premiumPrice) || premiumPrice < 1000) {
+      setError('Giá gói phải là số nguyên và tối thiểu 1.000đ.');
+      return;
+    }
     setSaving(true);
     setError('');
     setSuccessMsg('');
@@ -141,6 +151,25 @@ const AdminSystemConfig = () => {
                   <input type="checkbox" checked={!!configs['system.maintenance_mode']} onChange={() => handleToggle('system.maintenance_mode')} />
                   <span className="slider"></span>
                 </label>
+              </div>
+
+              <div style={{ padding: '1rem', backgroundColor: 'var(--neutral-50)', borderRadius: 'var(--radius-md)', border: '1px solid var(--neutral-200)' }}>
+                <h4 style={{ margin: '0 0 0.25rem', color: 'var(--neutral-800)', display: 'flex', alignItems: 'center', gap: '8px' }}><DollarSign size={18} /> Giá các gói dịch vụ</h4>
+                <p style={{ margin: '0 0 1rem', fontSize: '13px', color: 'var(--neutral-500)' }}>Giá lưu tại cấu hình hệ thống và được màn hình thanh toán tải động, không còn gán cứng trên giao diện.</p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                  {[
+                    ['package.pro.price', 'Gói Nâng cao (Pro)'],
+                    ['package.premium.price', 'Gói Chuyên gia (Premium)']
+                  ].map(([key, label]) => (
+                    <label key={key} style={{ fontSize: '14px', fontWeight: 600, color: 'var(--neutral-700)' }}>
+                      {label}
+                      <div style={{ display: 'flex', alignItems: 'center', marginTop: '8px' }}>
+                        <input type="number" min="1000" step="1000" value={configs[key] ?? ''} onChange={(event) => setConfigs((prev) => ({ ...prev, [key]: event.target.value }))} style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--neutral-300)', borderRadius: '8px 0 0 8px' }} />
+                        <span style={{ padding: '10px 12px', background: 'var(--neutral-200)', borderRadius: '0 8px 8px 0' }}>đ/tháng</span>
+                      </div>
+                    </label>
+                  ))}
+                </div>
               </div>
 
               <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
