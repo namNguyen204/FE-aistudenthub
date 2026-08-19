@@ -32,7 +32,7 @@ const AdminDashboardHome = () => {
         setBusinessStats(businessData);
         setAiUsage(aiData);
         setTypeStats(typeData || []);
-        
+
         // Ensure trendData is in the correct format for recharts
         // Assuming backend returns [{ date: '2023-10-01', count: 5 }, ...]
         setUploadTrend(trendData || []);
@@ -96,7 +96,7 @@ const AdminDashboardHome = () => {
             <div className="stat-label">Tổng số Users</div>
           </div>
         </div>
-        
+
         <div className="stat-card">
           <div className="stat-icon success">
             <FileText size={24} />
@@ -106,7 +106,7 @@ const AdminDashboardHome = () => {
             <div className="stat-label">Tổng Tài liệu</div>
           </div>
         </div>
-        
+
         <div className="stat-card">
           <div className="stat-icon warning">
             <MessageSquare size={24} />
@@ -116,7 +116,7 @@ const AdminDashboardHome = () => {
             <div className="stat-label">Phiên Chat AI</div>
           </div>
         </div>
-        
+
         <div className="stat-card">
           <div className="stat-icon danger">
             <ShieldAlert size={24} />
@@ -139,7 +139,7 @@ const AdminDashboardHome = () => {
             <div className="stat-label">Doanh thu từ giao dịch thành công</div>
           </div>
         </div>
-        
+
         <div className="stat-card">
           <div className="stat-icon" style={{ backgroundColor: 'var(--primary-50)', color: 'var(--primary-600)' }}>
             <TrendingUp size={24} />
@@ -149,7 +149,7 @@ const AdminDashboardHome = () => {
             <div className="stat-label">Doanh thu tháng này</div>
           </div>
         </div>
-        
+
         <div className="stat-card">
           <div className="stat-icon" style={{ backgroundColor: 'var(--warning-50)', color: 'var(--warning-600)' }}>
             <Crown size={24} />
@@ -159,8 +159,8 @@ const AdminDashboardHome = () => {
             <div className="stat-label">Active Premium Users</div>
           </div>
         </div>
-        
-        
+
+
         <div className="stat-card">
           <div className="stat-icon" style={{ backgroundColor: 'var(--success-50)', color: 'var(--success-600)' }}>
             <TrendingUp size={24} />
@@ -189,20 +189,20 @@ const AdminDashboardHome = () => {
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem', gap: '8px' }}>
-        <button 
-          onClick={() => setDaysFilter(7)} 
+        <button
+          onClick={() => setDaysFilter(7)}
           style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--neutral-300)', backgroundColor: daysFilter === 7 ? 'var(--primary-600)' : 'white', color: daysFilter === 7 ? 'white' : 'var(--neutral-700)', cursor: 'pointer', fontWeight: 500 }}
         >
           7 ngày
         </button>
-        <button 
-          onClick={() => setDaysFilter(30)} 
+        <button
+          onClick={() => setDaysFilter(30)}
           style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--neutral-300)', backgroundColor: daysFilter === 30 ? 'var(--primary-600)' : 'white', color: daysFilter === 30 ? 'white' : 'var(--neutral-700)', cursor: 'pointer', fontWeight: 500 }}
         >
           30 ngày
         </button>
-        <button 
-          onClick={() => setDaysFilter(90)} 
+        <button
+          onClick={() => setDaysFilter(90)}
           style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--neutral-300)', backgroundColor: daysFilter === 90 ? 'var(--primary-600)' : 'white', color: daysFilter === 90 ? 'white' : 'var(--neutral-700)', cursor: 'pointer', fontWeight: 500 }}
         >
           90 ngày
@@ -220,18 +220,18 @@ const AdminDashboardHome = () => {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--neutral-200)" />
                 <XAxis dataKey="date" tickFormatter={(val) => new Date(val).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} tick={{ fontSize: 12, fill: 'var(--neutral-500)' }} axisLine={false} tickLine={false} />
                 <YAxis tickFormatter={(value) => `${value / 1000000}M`} tick={{ fontSize: 12, fill: 'var(--neutral-500)' }} axisLine={false} tickLine={false} width={40} />
-                <Tooltip 
+                <Tooltip
                   formatter={(value) => [`${value.toLocaleString()} đ`, 'Doanh thu']}
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} 
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                 />
                 <Line type="monotone" dataKey="revenue" stroke="var(--success-500)" strokeWidth={3} activeDot={{ r: 8 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
-        
+
         <div className="dashboard-section glass-card">
-           <div className="dashboard-section-header">
+          <div className="dashboard-section-header">
             <h3 className="dashboard-section-title">Tài liệu theo loại tệp ({documentedTotal.toLocaleString('vi-VN')} tài liệu)</h3>
           </div>
           <div className="dashboard-section-body" style={{ padding: '2rem', height: '300px' }}>
@@ -263,7 +263,7 @@ const AdminDashboardHome = () => {
           </div>
         </div>
       </div>
-      
+
       <div className="dashboard-section glass-card" style={{ marginTop: '2rem' }}>
         <div className="dashboard-section-header">
           <h3 className="dashboard-section-title">Xu hướng Upload tài liệu ({daysFilter} ngày)</h3>
@@ -278,9 +278,9 @@ const AdminDashboardHome = () => {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--neutral-200)" />
                 <XAxis dataKey="date" tick={{ fontSize: 12, fill: 'var(--neutral-500)' }} axisLine={false} tickLine={false} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: 'var(--neutral-500)' }} axisLine={false} tickLine={false} />
-                <Tooltip 
+                <Tooltip
                   cursor={{ fill: 'var(--neutral-100)' }}
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} 
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                 />
                 <Bar dataKey="count" fill="var(--primary-500)" radius={[4, 4, 0, 0]} barSize={30} name="Số lượng tài liệu" />
               </BarChart>
