@@ -36,7 +36,7 @@ const ReportDocumentModal = ({ isOpen, onClose, documentTitle, documentId }) => 
 
     setIsSubmitting(true);
     setError('');
-    
+
     try {
       // Gọi API report (bạn cần đảm bảo documentService.reportDocument có tồn tại hoặc bổ sung vào)
       await documentService.reportDocument(documentId, { reason, description });
@@ -77,7 +77,7 @@ const ReportDocumentModal = ({ isOpen, onClose, documentTitle, documentId }) => 
               {error}
             </div>
           )}
-          
+
           {success ? (
             <div className="alert alert-success" style={{ padding: '2rem', textAlign: 'center', backgroundColor: 'var(--success-50)', color: 'var(--success-700)', borderRadius: 'var(--radius-md)' }}>
               <ShieldCheck size={48} style={{ margin: '0 auto 1rem' }} />
@@ -93,10 +93,10 @@ const ReportDocumentModal = ({ isOpen, onClose, documentTitle, documentId }) => 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {VIOLATION_REASONS.map((r) => (
                     <label key={r.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '14px', color: 'var(--neutral-700)', padding: '8px', borderRadius: '8px', background: reason === r.id ? 'var(--error-50)' : 'transparent' }}>
-                      <input 
-                        type="radio" 
-                        name="reportReason" 
-                        value={r.id} 
+                      <input
+                        type="radio"
+                        name="reportReason"
+                        value={r.id}
                         checked={reason === r.id}
                         onChange={(e) => setReason(e.target.value)}
                         disabled={isSubmitting}
@@ -110,7 +110,7 @@ const ReportDocumentModal = ({ isOpen, onClose, documentTitle, documentId }) => 
 
               <div style={{ marginBottom: '24px' }}>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: 'var(--neutral-700)', marginBottom: '8px' }}>
-                  Mô tả chi tiết vi phạm <span style={{ color: 'var(--error-500)' }}>*</span>
+                  Mô tả chi tiết vi phạm (ít nhất 20 ký tự)<span style={{ color: 'var(--error-500)' }}>*</span>
                 </label>
                 <textarea
                   className="form-control"

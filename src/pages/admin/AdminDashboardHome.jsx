@@ -3,6 +3,7 @@ import { Users, FileText, MessageSquare, ShieldAlert, AlertTriangle, DollarSign,
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, LineChart, Line } from 'recharts';
 import adminService from '../../services/admin.service';
 
+/** Admin Dashboard Home component with clean charts and business metrics. */
 const AdminDashboardHome = () => {
   const [stats, setStats] = useState(null);
   const [businessStats, setBusinessStats] = useState(null);
