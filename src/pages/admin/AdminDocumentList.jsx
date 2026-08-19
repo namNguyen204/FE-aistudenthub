@@ -377,13 +377,13 @@ const AdminDocumentList = () => {
                   <th style={{ padding: '1rem 0.5rem' }}>Trạng thái</th>
                   <th style={{ padding: '1rem 0.5rem' }}>Môn học</th>
                   <th style={{ padding: '1rem 0.5rem' }}>Thời gian</th>
-                  {activeTab !== 'ALL' && <th style={{ padding: '1rem 0.5rem', textAlign: 'right' }}>Thao tác</th>}
+                  <th style={{ padding: '1rem 0.5rem', textAlign: 'right' }}>Thao tác</th>
                 </tr>
               </thead>
               <tbody>
                 {Array.from({ length: 5 }).map((_, idx) => (
                   <tr key={idx} style={{ borderBottom: '1px solid var(--neutral-100)' }}>
-                    {Array.from({ length: activeTab === 'ALL' ? 5 : 6 }).map((_, colIdx) => (
+                    {Array.from({ length: 6 }).map((_, colIdx) => (
                       <td key={colIdx} style={{ padding: '1rem 0.5rem' }}>
                         <div style={{ height: '20px', backgroundColor: 'var(--neutral-200)', borderRadius: '4px', animation: 'skeleton-pulse 1.5s infinite', width: colIdx === 0 ? '70%' : '100%' }}></div>
                       </td>
@@ -403,13 +403,13 @@ const AdminDocumentList = () => {
                   <th style={{ padding: '1rem 0.5rem' }}>Trạng thái</th>
                   <th style={{ padding: '1rem 0.5rem' }}>Môn học</th>
                   <th style={{ padding: '1rem 0.5rem' }}>Thời gian</th>
-                  {activeTab !== 'ALL' && <th style={{ padding: '1rem 0.5rem', textAlign: 'right' }}>Thao tác</th>}
+                  <th style={{ padding: '1rem 0.5rem', textAlign: 'right' }}>Thao tác</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredDocuments.length === 0 ? (
                   <tr>
-                    <td colSpan={activeTab === 'ALL' ? 5 : 6} style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--neutral-500)', backgroundColor: '#ffffff' }}>
+                    <td colSpan={6} style={{ padding: '4rem 2rem', textAlign: 'center', color: 'var(--neutral-500)', backgroundColor: '#ffffff' }}>
                       <div style={{ width: '64px', height: '64px', margin: '0 auto 1rem', backgroundColor: 'var(--neutral-50)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Search size={32} color="var(--neutral-400)" />
                       </div>
@@ -439,7 +439,6 @@ const AdminDocumentList = () => {
                         <td style={{ padding: '1rem 0.5rem', color: 'var(--neutral-600)' }}>
                           {doc.createdAt ? formatDistanceToNow(new Date(doc.createdAt), { addSuffix: true, locale: vi }) : '-'}
                         </td>
-                        {activeTab !== 'ALL' && (
                           <td style={{ padding: '1rem 0.5rem', textAlign: 'right' }}>
                             <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                               {/* Nút Xem (Eye) - luôn luôn hiển thị */}
@@ -507,7 +506,6 @@ const AdminDocumentList = () => {
                               {activeTab === 'REJECTED' && null}
                             </div>
                           </td>
-                        )}
                       </tr>
                     );
                   })

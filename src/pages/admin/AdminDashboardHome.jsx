@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, FileText, MessageSquare, ShieldAlert, AlertTriangle, DollarSign, TrendingUp, Crown, Star } from 'lucide-react';
+import { Users, FileText, MessageSquare, ShieldAlert, AlertTriangle, DollarSign, TrendingUp, Crown, Star, Flag, Clock, CheckCircle } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, LineChart, Line } from 'recharts';
 import adminService from '../../services/admin.service';
 
@@ -10,6 +10,7 @@ const AdminDashboardHome = () => {
   const [typeStats, setTypeStats] = useState([]);
   const [uploadTrend, setUploadTrend] = useState([]);
   const [revenueTrend, setRevenueTrend] = useState([]);
+  const [violationStats, setViolationStats] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [daysFilter, setDaysFilter] = useState(30);
@@ -18,13 +19,14 @@ const AdminDashboardHome = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [statsData, businessData, aiData, typeData, trendData, revenueData] = await Promise.all([
+        const [statsData, businessData, aiData, typeData, trendData, revenueData, violationData] = await Promise.all([
           adminService.getDashboardStats(),
           adminService.getBusinessStats(),
           adminService.getAiUsage(),
           adminService.getDocumentTypeStats(),
           adminService.getUploadTrend(daysFilter),
-          adminService.getRevenueTrend(daysFilter)
+          adminService.getRevenueTrend(daysFilter),
+          adminService.getViolationStats().catch(() => null)
         ]);
         setStats(statsData);
         setBusinessStats(businessData);
@@ -35,6 +37,7 @@ const AdminDashboardHome = () => {
         // Assuming backend returns [{ date: '2023-10-01', count: 5 }, ...]
         setUploadTrend(trendData || []);
         setRevenueTrend(revenueData || []);
+        setViolationStats(violationData || {});
       } catch (err) {
         setError('Không thể tải dữ liệu thống kê');
         console.error(err);
@@ -46,6 +49,28 @@ const AdminDashboardHome = () => {
   }, [daysFilter]);
 
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Đang tải dữ liệu Dashboard...</div>;
+
+  const formatCurrency = (value) => `${Number(value || 0).toLocaleString('vi-VN')}đ`;
+  const totalRevenue = businessStats?.successfulRevenue ?? businessStats?.totalRevenue ?? 0;
+  const totalTransactions = businessStats?.successfulTransactions ?? businessStats?.transactionCount ?? businessStats?.totalTransactions ?? 0;
+  const popularPackageKey = String(businessStats?.mostPopularPackage || '').toUpperCase();
+  const popularPackage = {
+    PRO: 'Gói Nâng cao',
+    ADVANCED: 'Gói Nâng cao',
+    PREMIUM: 'Gói Chuyên gia',
+    BASIC: 'Gói Cơ bản'
+  }[popularPackageKey] || businessStats?.mostPopularPackage || 'Chưa có giao dịch';
+  const normalizedTypeStats = typeStats.map((item) => {
+    const rawType = String(item.fileType || item.type || 'Khác').toLowerCase();
+    let name = 'Khác';
+    if (rawType.includes('pdf')) name = 'PDF';
+    else if (rawType.includes('word') || rawType.includes('document')) name = 'Word';
+    else if (rawType.includes('presentation') || rawType.includes('powerpoint')) name = 'PowerPoint';
+    else if (rawType.includes('image')) name = 'Hình ảnh';
+    else if (rawType.includes('text')) name = 'Văn bản';
+    return { name, value: Number(item.count ?? item.value ?? 0) };
+  });
+  const documentedTotal = normalizedTypeStats.reduce((sum, item) => sum + item.value, 0);
 
   return (
     <div className="premium-page-wrapper">
@@ -110,8 +135,8 @@ const AdminDashboardHome = () => {
             <DollarSign size={24} />
           </div>
           <div className="stat-info">
-            <div className="stat-value">{businessStats?.totalRevenue ? businessStats.totalRevenue.toLocaleString() : 0}đ</div>
-            <div className="stat-label">Tổng doanh thu</div>
+            <div className="stat-value">{formatCurrency(totalRevenue)}</div>
+            <div className="stat-label">Doanh thu từ giao dịch thành công</div>
           </div>
         </div>
         
@@ -120,7 +145,7 @@ const AdminDashboardHome = () => {
             <TrendingUp size={24} />
           </div>
           <div className="stat-info">
-            <div className="stat-value">{businessStats?.currentMonthRevenue ? businessStats.currentMonthRevenue.toLocaleString() : 0}đ</div>
+            <div className="stat-value">{formatCurrency(businessStats?.currentMonthRevenue)}</div>
             <div className="stat-label">Doanh thu tháng này</div>
           </div>
         </div>
@@ -135,35 +160,32 @@ const AdminDashboardHome = () => {
           </div>
         </div>
         
-        <div className="stat-card">
-          <div className="stat-icon" style={{ backgroundColor: 'var(--danger-50)', color: 'var(--danger-600)' }}>
-            <Star size={24} />
-          </div>
-          <div className="stat-info">
-            <div className="stat-value">{businessStats?.mostPopularPackage || "Không có dữ liệu"}</div>
-            <div className="stat-label">Gói Bán Chạy Nhất</div>
-          </div>
-        </div>
         
         <div className="stat-card">
           <div className="stat-icon" style={{ backgroundColor: 'var(--success-50)', color: 'var(--success-600)' }}>
             <TrendingUp size={24} />
           </div>
           <div className="stat-info">
-            <div className="stat-value">{businessStats?.totalTransactions || 0}</div>
-            <div className="stat-label">Tổng Giao dịch</div>
+            <div className="stat-value">{Number(totalTransactions).toLocaleString('vi-VN')}</div>
+            <div className="stat-label">Giao dịch thành công</div>
           </div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-icon" style={{ backgroundColor: 'var(--primary-50)', color: 'var(--primary-600)' }}>
-            <Users size={24} />
+      </div>
+
+      <h3 style={{ marginBottom: '1rem', color: 'var(--neutral-700)' }}>Thống kê vi phạm</h3>
+      <div className="stats-grid" style={{ marginBottom: '2rem' }}>
+        {[
+          ['Tổng báo cáo', violationStats.totalReports ?? violationStats.total ?? 0, Flag, 'danger'],
+          ['Chờ xử lý', violationStats.pendingReports ?? violationStats.pending ?? 0, Clock, 'warning'],
+          ['Vi phạm đã xác nhận', violationStats.resolvedReports ?? violationStats.resolved ?? 0, ShieldAlert, 'danger'],
+          ['Báo cáo bị bác bỏ', violationStats.dismissedReports ?? violationStats.dismissed ?? 0, CheckCircle, 'success']
+        ].map(([label, value, Icon, tone]) => (
+          <div className="stat-card" key={label}>
+            <div className={`stat-icon ${tone}`}><Icon size={24} /></div>
+            <div className="stat-info"><div className="stat-value">{Number(value).toLocaleString('vi-VN')}</div><div className="stat-label">{label}</div></div>
           </div>
-          <div className="stat-info">
-            <div className="stat-value">{businessStats?.studentPackages || 0}</div>
-            <div className="stat-label">Gói Student</div>
-          </div>
-        </div>
+        ))}
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem', gap: '8px' }}>
@@ -210,21 +232,13 @@ const AdminDashboardHome = () => {
         
         <div className="dashboard-section glass-card">
            <div className="dashboard-section-header">
-            <h3 className="dashboard-section-title">Thống kê theo Loại tệp</h3>
+            <h3 className="dashboard-section-title">Tài liệu theo loại tệp ({documentedTotal.toLocaleString('vi-VN')} tài liệu)</h3>
           </div>
           <div className="dashboard-section-body" style={{ padding: '2rem', height: '300px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={typeStats.map(t => {
-                    let name = t.fileType || 'Khác';
-                    if (name.includes('pdf')) name = 'PDF';
-                    else if (name.includes('wordprocessingml')) name = 'Word';
-                    else if (name.includes('presentationml')) name = 'PowerPoint';
-                    else if (name.includes('image')) name = 'Hình ảnh';
-                    else if (name.includes('text')) name = 'Văn bản';
-                    return { name, value: t.count };
-                  })}
+                  data={normalizedTypeStats}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -240,6 +254,10 @@ const AdminDashboardHome = () => {
                   })}
                 </Pie>
                 <Tooltip />
+                <Legend formatter={(value) => {
+                  const item = normalizedTypeStats.find((entry) => entry.name === value);
+                  return `${value}: ${item?.value?.toLocaleString('vi-VN') || 0}`;
+                }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -248,7 +266,7 @@ const AdminDashboardHome = () => {
       
       <div className="dashboard-section glass-card" style={{ marginTop: '2rem' }}>
         <div className="dashboard-section-header">
-          <h3 className="dashboard-section-title">Xu hướng Upload tài liệu (30 ngày)</h3>
+          <h3 className="dashboard-section-title">Xu hướng Upload tài liệu ({daysFilter} ngày)</h3>
         </div>
         <div className="dashboard-section-body" style={{ padding: '2rem', height: '350px' }}>
           {uploadTrend.length > 0 ? (
