@@ -157,6 +157,13 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
 
+.visibility-notice {
+  margin: var(--spacing-3) 0 0;
+  color: var(--neutral-500);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
 .upload-actions {
   display: flex;
   justify-content: flex-end;
