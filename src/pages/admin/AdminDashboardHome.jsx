@@ -60,16 +60,20 @@ const AdminDashboardHome = () => {
     PREMIUM: 'Gói Chuyên gia',
     BASIC: 'Gói Cơ bản'
   }[popularPackageKey] || businessStats?.mostPopularPackage || 'Chưa có giao dịch';
-  const normalizedTypeStats = typeStats.map((item) => {
-    const rawType = String(item.fileType || item.type || 'Khác').toLowerCase();
-    let name = 'Khác';
-    if (rawType.includes('pdf')) name = 'PDF';
-    else if (rawType.includes('word') || rawType.includes('document')) name = 'Word';
-    else if (rawType.includes('presentation') || rawType.includes('powerpoint')) name = 'PowerPoint';
-    else if (rawType.includes('image')) name = 'Hình ảnh';
-    else if (rawType.includes('text')) name = 'Văn bản';
-    return { name, value: Number(item.count ?? item.value ?? 0) };
-  });
+  const normalizedTypeStats = Object.values(
+    typeStats.reduce((acc, item) => {
+      const rawType = String(item.fileType || item.type || 'Khác').toLowerCase();
+      let name = 'Khác';
+      if (rawType.includes('pdf')) name = 'PDF';
+      else if (rawType.includes('word') || rawType.includes('document')) name = 'Word';
+      else if (rawType.includes('presentation') || rawType.includes('powerpoint')) name = 'PowerPoint';
+      else if (rawType.includes('image')) name = 'Hình ảnh';
+      else if (rawType.includes('text')) name = 'Văn bản';
+      const value = Number(item.count ?? item.value ?? 0);
+      acc[name] = { name, value: (acc[name]?.value ?? 0) + value };
+      return acc;
+    }, {})
+  );
   const documentedTotal = normalizedTypeStats.reduce((sum, item) => sum + item.value, 0);
 
   return (
@@ -240,24 +244,34 @@ const AdminDashboardHome = () => {
                 <Pie
                   data={normalizedTypeStats}
                   cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  paddingAngle={5}
+                  cy="45%"
+                  innerRadius={55}
+                  outerRadius={85}
+                  paddingAngle={4}
                   dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={false}
                 >
-                  {typeStats.map((entry, index) => {
-                    const colors = ['var(--primary-500)', 'var(--danger-500)', 'var(--success-500)', 'var(--warning-500)'];
+                  {normalizedTypeStats.map((entry, index) => {
+                    const colors = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#64748B'];
                     return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
                   })}
                 </Pie>
-                <Tooltip />
-                <Legend formatter={(value) => {
-                  const item = normalizedTypeStats.find((entry) => entry.name === value);
-                  return `${value}: ${item?.value?.toLocaleString('vi-VN') || 0}`;
-                }} />
+                <Tooltip 
+                  formatter={(value) => [
+                    `${value.toLocaleString('vi-VN')} tài liệu (${((value / (documentedTotal || 1)) * 100).toFixed(1)}%)`,
+                    'Số lượng'
+                  ]}
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+                />
+                <Legend 
+                  verticalAlign="bottom"
+                  height={36}
+                  formatter={(value) => {
+                    const item = normalizedTypeStats.find((entry) => entry.name === value);
+                    const pct = documentedTotal ? ((item?.value / documentedTotal) * 100).toFixed(0) : 0;
+                    return `${value}: ${item?.value?.toLocaleString('vi-VN') || 0} (${pct}%)`;
+                  }} 
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>
