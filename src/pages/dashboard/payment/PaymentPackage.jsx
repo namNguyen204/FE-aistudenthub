@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { CreditCard, Zap, Crown, CheckCircle2, BookOpen, Check, X } from 'lucide-react';
+import {
+  CreditCard,
+  Zap,
+  Crown,
+  CheckCircle2,
+  BookOpen,
+  Check,
+  X
+} from 'lucide-react';
+
 import Button from '../../../components/Button/Button';
 import paymentService from '../../../services/payment.service';
 import { useAuth } from '../../../context/AuthContext';
@@ -13,53 +22,121 @@ const PACKAGES = [
     priceStr: 'Miễn phí',
     icon: <BookOpen size={24} className="package-icon" />,
     color: 'var(--primary-500)',
-    description: 'Dành cho sinh viên mới bắt đầu, trải nghiệm các tính năng cơ bản của hệ thống.',
+
+    description:
+      'Dành cho sinh viên mới bắt đầu, trải nghiệm các tính năng cơ bản của hệ thống.',
+
     features: [
-      { text: '5 câu hỏi AI / ngày', included: true },
-      { text: 'Lưu trữ tối đa 50 tài liệu', included: true },
-      { text: 'Dung lượng tối đa 10MB/tài liệu', included: true },
-      { text: 'Tải lên & xem trước tài liệu', included: true },
-      { text: 'Chat AI cơ bản', included: true },
-      { text: 'Phân tích tài liệu PDF nâng cao', included: false }
+      {
+        text: '5 câu hỏi AI / ngày',
+        included: true
+      },
+      {
+        text: 'Lưu trữ tối đa 50 tài liệu',
+        included: true
+      },
+      {
+        text: 'Dung lượng tối đa 10MB/tài liệu',
+        included: true
+      },
+      {
+        text: 'Tải lên & xem trước tài liệu',
+        included: true
+      },
+      {
+        text: 'Chat AI cơ bản',
+        included: true
+      },
+      {
+        text: 'Phân tích tài liệu PDF nâng cao',
+        included: false
+      }
     ],
+
     isPopular: false,
     buttonText: 'Đang sử dụng',
     subText: 'Không cần thẻ tín dụng'
   },
+
   {
     id: 'pro',
     name: 'Gói Nâng cao',
+
+    // Giá fallback nếu API lỗi
     price: 39000,
     priceStr: '39.000đ',
+
     icon: <Zap size={24} className="package-icon text-warning" />,
     color: '#eab308',
-    description: 'Dành cho sinh viên học tập thường xuyên, cần AI hỗ trợ phân tích và tóm tắt.',
+
+    description:
+      'Dành cho sinh viên học tập thường xuyên, cần AI hỗ trợ phân tích và tóm tắt.',
+
     features: [
-      { text: '10 câu hỏi AI / ngày', included: true },
-      { text: 'Lưu trữ tối đa 100 tài liệu', included: true },
-      { text: 'Phân tích & trích xuất nội dung PDF', included: true },
-      { text: 'Quản lý thư mục & nhãn', included: true },
-      { text: 'Hỏi đáp AI theo từng tài liệu', included: true },
-      { text: 'Tóm tắt tài liệu tự động', included: true }
+      {
+        text: '10 câu hỏi AI / ngày',
+        included: true
+      },
+      {
+        text: 'Lưu trữ tối đa 100 tài liệu',
+        included: true
+      },
+      {
+        text: 'Phân tích & trích xuất nội dung PDF',
+        included: true
+      },
+      {
+        text: 'Quản lý thư mục & nhãn',
+        included: true
+      },
+      {
+        text: 'Hỏi đáp AI theo từng tài liệu',
+        included: true
+      },
+      {
+        text: 'Tóm tắt tài liệu tự động',
+        included: true
+      }
     ],
+
     isPopular: true,
     buttonText: 'Chọn gói này',
     subText: 'Thanh toán qua VietQR - PayOS'
   },
+
   {
     id: 'premium',
     name: 'Gói Chuyên gia',
+
+    // Giá fallback nếu API lỗi
     price: 79000,
     priceStr: '79.000đ',
+
     icon: <Crown size={24} className="package-icon text-danger" />,
     color: 'var(--danger-500)',
-    description: 'Dành cho sinh viên ôn thi, làm đồ án cần xử lý lượng lớn tài liệu và giải bài tập.',
+
+    description:
+      'Dành cho sinh viên ôn thi, làm đồ án cần xử lý lượng lớn tài liệu và giải bài tập.',
+
     features: [
-      { text: '15 câu hỏi AI / ngày', included: true },
-      { text: 'Lưu trữ tối đa 150 tài liệu', included: true },
-      { text: 'Tất cả tính năng gói Nâng cao', included: true },
-      { text: 'Ưu tiên tốc độ xử lý AI', included: true }
+      {
+        text: '15 câu hỏi AI / ngày',
+        included: true
+      },
+      {
+        text: 'Lưu trữ tối đa 150 tài liệu',
+        included: true
+      },
+      {
+        text: 'Tất cả tính năng gói Nâng cao',
+        included: true
+      },
+      {
+        text: 'Ưu tiên tốc độ xử lý AI',
+        included: true
+      }
     ],
+
     isPopular: false,
     buttonText: 'Chọn gói này',
     subText: 'Thanh toán qua VietQR - PayOS'
@@ -68,247 +145,620 @@ const PACKAGES = [
 
 const PaymentPackage = () => {
   const { user } = useAuth();
+
   const [packages, setPackages] = useState(PACKAGES);
-  const [selectedPkg, setSelectedPkg] = useState(PACKAGES[1]);
+
+  const [selectedPkg, setSelectedPkg] = useState(
+    PACKAGES[1]
+  );
+
   const [isProcessing, setIsProcessing] = useState(false);
+
   const [error, setError] = useState('');
 
+  /*
+   * Load giá từ PricingPlan
+   */
   useEffect(() => {
     const loadPackages = async () => {
       try {
-        const remotePackages = await paymentService.getPackages();
-        if (!Array.isArray(remotePackages) || remotePackages.length === 0) return;
+        const remotePackages =
+          await paymentService.getPricingPlans();
+
+        if (
+          !Array.isArray(remotePackages) ||
+          remotePackages.length === 0
+        ) {
+          return;
+        }
+
+        /*
+         * Mapping:
+         *
+         * Backend STUDENT
+         *        ↓
+         * Frontend pro
+         *        ↓
+         * Gói Nâng cao
+         *
+         * Backend PRO
+         *        ↓
+         * Frontend premium
+         *        ↓
+         * Gói Chuyên gia
+         */
+
         const merged = PACKAGES.map((basePackage) => {
-          const remote = remotePackages.find((item) =>
-            String(item.id || item.code || item.tier).toLowerCase() === basePackage.id
+          let remote = null;
+
+          /*
+           * BASIC
+           * Không lấy từ PricingPlan
+           */
+          if (basePackage.id === 'basic') {
+            return basePackage;
+          }
+
+          /*
+           * Gói Nâng cao
+           * Backend = STUDENT
+           */
+          if (basePackage.id === 'pro') {
+            remote = remotePackages.find(
+              (item) =>
+                String(item.name || '')
+                  .trim()
+                  .toUpperCase() === 'STUDENT'
+            );
+          }
+
+          /*
+           * Gói Chuyên gia
+           * Backend = PRO
+           */
+          if (basePackage.id === 'premium') {
+            remote = remotePackages.find(
+              (item) =>
+                String(item.name || '')
+                  .trim()
+                  .toUpperCase() === 'PRO'
+            );
+          }
+
+          /*
+           * Không tìm thấy PricingPlan
+           * → dùng fallback
+           */
+          if (!remote) {
+            return basePackage;
+          }
+
+          /*
+           * Lấy giá từ database
+           */
+          const price = Number(
+            remote.price ?? basePackage.price
           );
-          if (!remote) return basePackage;
-          const price = Number(remote.price ?? remote.amount ?? basePackage.price);
+
           return {
             ...basePackage,
-            ...remote,
+
+            /*
+             * Giữ ID frontend:
+             * pro / premium
+             */
             id: basePackage.id,
+
+            /*
+             * ID thật của PricingPlan
+             */
+            planId: remote.id,
+
+            /*
+             * Giá từ backend
+             */
+            price: price,
+
+            /*
+             * Format giá VNĐ
+             */
+            priceStr:
+              price === 0
+                ? 'Miễn phí'
+                : `${price.toLocaleString('vi-VN')}đ`,
+
+            /*
+             * Giữ UI
+             */
             icon: basePackage.icon,
             color: basePackage.color,
-            features: Array.isArray(remote.features) ? remote.features : basePackage.features,
-            price,
-            priceStr: price === 0 ? 'Miễn phí' : `${price.toLocaleString('vi-VN')}đ`
+
+            /*
+             * Nếu backend có features
+             * thì dùng features backend.
+             * Không có thì dùng features frontend.
+             */
+            features: Array.isArray(remote.features)
+              ? remote.features
+              : basePackage.features,
+
+            /*
+             * Có thể dùng thêm thông tin từ PricingPlan
+             */
+            durationMonths:
+              remote.durationMonths,
+
+            aiDailyLimit:
+              remote.aiDailyLimit,
+
+            documentLimit:
+              remote.documentLimit
           };
         });
+
+        /*
+         * Update packages
+         */
         setPackages(merged);
-        setSelectedPkg((current) => merged.find((item) => item.id === current.id) || merged[1]);
+
+        /*
+         * Giữ package đang được chọn
+         */
+        setSelectedPkg((current) => {
+          return (
+            merged.find(
+              (item) => item.id === current.id
+            ) || merged[1]
+          );
+        });
+
       } catch (err) {
-        console.warn('Không thể tải bảng giá động, tạm dùng bảng giá mặc định.', err);
+        console.warn(
+          'Không thể tải bảng giá từ PricingPlan, tạm dùng bảng giá mặc định.',
+          err
+        );
       }
     };
+
     loadPackages();
   }, []);
 
-  const handlePayment = async (packageToBuy = selectedPkg) => {
-    const targetPackage = packageToBuy || selectedPkg;
-    if (user?.subscriptionTier === 'PREMIUM') {
-      setError('Tài khoản của bạn đã có gói Chuyên gia (Premium). Bạn không thể mua thêm do hạn sử dụng là 30 ngày/1 gói.');
+  /*
+   * Thanh toán
+   */
+  const handlePayment = async (
+    packageToBuy = selectedPkg
+  ) => {
+    const targetPackage =
+      packageToBuy || selectedPkg;
+
+    /*
+     * Đã có Premium
+     */
+    if (
+      user?.subscriptionTier === 'PREMIUM'
+    ) {
+      setError(
+        'Tài khoản của bạn đã có gói Chuyên gia (Premium). Bạn không thể mua thêm do hạn sử dụng là 30 ngày/1 gói.'
+      );
       return;
     }
 
-    if (user?.subscriptionTier === 'PRO' && targetPackage.id === 'pro') {
-      setError('Tài khoản của bạn đã có gói Nâng cao (Pro). Bạn chỉ có thể nâng cấp lên gói Chuyên gia.');
+    /*
+     * Đã có PRO
+     * Không cho mua lại PRO
+     */
+    if (
+      user?.subscriptionTier === 'PRO' &&
+      targetPackage.id === 'pro'
+    ) {
+      setError(
+        'Tài khoản của bạn đã có gói Nâng cao (Pro). Bạn chỉ có thể nâng cấp lên gói Chuyên gia.'
+      );
       return;
     }
 
-    if (user?.subscriptionTier === 'BASIC' && targetPackage.id === 'basic') {
-      setError('Bạn đang sử dụng gói Cơ bản.');
+    /*
+     * BASIC
+     */
+    if (
+      user?.subscriptionTier === 'BASIC' &&
+      targetPackage.id === 'basic'
+    ) {
+      setError(
+        'Bạn đang sử dụng gói Cơ bản.'
+      );
+      return;
+    }
+
+    /*
+     * BASIC không cần thanh toán
+     */
+    if (
+      targetPackage.id === 'basic'
+    ) {
+      return;
+    }
+
+    /*
+     * PricingPlan phải có planId
+     */
+    if (!targetPackage.planId) {
+      setError(
+        'Không tìm thấy thông tin gói cước. Vui lòng tải lại trang.'
+      );
       return;
     }
 
     setIsProcessing(true);
     setError('');
+
     try {
-      const returnUrl = `${window.location.origin}/dashboard/payment/success`;
-      const cancelUrl = `${window.location.origin}/dashboard/payment/cancel`;
-      const description = `Mua ${targetPackage.name}`;
+      const returnUrl =
+        `${window.location.origin}/dashboard/payment/success`;
 
-      const response = await paymentService.createPayment(
-        targetPackage.price,
-        description,
-        returnUrl,
-        cancelUrl
-      );
+      const cancelUrl =
+        `${window.location.origin}/dashboard/payment/cancel`;
 
-      if (response && response.checkoutUrl) {
-        window.location.href = response.checkoutUrl;
+      /*
+       * KHÔNG gửi price nữa.
+       *
+       * Gửi planId để backend tự tìm
+       * PricingPlan và lấy price hiện tại.
+       */
+      const response =
+        await paymentService.createPaymentByPlan(
+          targetPackage.planId,
+          returnUrl,
+          cancelUrl
+        );
+
+      /*
+       * Có link PayOS
+       */
+      if (
+        response &&
+        response.checkoutUrl
+      ) {
+        window.location.href =
+          response.checkoutUrl;
       } else {
-        setError('Không thể tạo link thanh toán, vui lòng thử lại sau.');
+        setError(
+          'Không thể tạo link thanh toán, vui lòng thử lại sau.'
+        );
+
         setIsProcessing(false);
       }
+
     } catch (err) {
-      console.error(err);
-      const errorMessage = err.response?.data?.message || 'Đã xảy ra lỗi khi kết nối tới cổng thanh toán.';
+      console.error(
+        'Payment error:',
+        err
+      );
+
+      const errorMessage =
+        err.response?.data?.message ||
+        'Đã xảy ra lỗi khi kết nối tới cổng thanh toán.';
+
       setError(errorMessage);
+
       setIsProcessing(false);
     }
   };
 
   return (
-    <div className="premium-page-wrapper payment-page">
-      <div className="page-header text-center" style={{ alignItems: 'center', marginBottom: '3rem' }}>
-        <h1 className="page-title">Nâng cấp Tài khoản</h1>
-        <p className="page-description" style={{ maxWidth: '600px', margin: '0.5rem auto' }}>
-          Mở khóa toàn bộ sức mạnh của AI Student Hub với các gói cước siêu tiết kiệm. Thanh toán an toàn, nhanh chóng qua VietQR.
-        </p>
-      </div>
+    <div className="payment-package">
 
-      {user?.subscriptionTier === 'PREMIUM' && (
-        <div className="alert alert-success" style={{ maxWidth: '800px', margin: '0 auto 2rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <Crown size={24} color="#eab308" fill="#eab308" />
-          <div>
-            Tài khoản của bạn đang sử dụng <strong>Gói Chuyên gia (Premium)</strong>! 
-            Còn <strong>{user?.premiumExpireAt ? Math.ceil((new Date(user.premiumExpireAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 30} ngày</strong> (hết hạn ngày <strong>{user?.premiumExpireAt ? new Date(user.premiumExpireAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''}</strong>). Hiện tại bạn không thể mua thêm.
-          </div>
-        </div>
-      )}
-      {user?.subscriptionTier === 'PRO' && (
-        <div className="alert alert-info" style={{ maxWidth: '800px', margin: '0 auto 2rem', display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', padding: '1rem', borderRadius: '12px' }}>
-          <Zap size={24} color="#0284c7" fill="#0284c7" />
-          <div>
-            <strong>Tài khoản của bạn đang sử dụng Gói Nâng cao (Pro)!</strong>
-            <br />
-            Bạn có thể nâng cấp lên Gói Chuyên gia để trải nghiệm đầy đủ tính năng.
-          </div>
+      {/* =========================
+          ERROR
+      ========================= */}
+      {error && (
+        <div className="payment-error">
+          <X size={18} />
+          <span>{error}</span>
         </div>
       )}
 
-      {error && <div className="alert alert-danger" style={{ maxWidth: '800px', margin: '0 auto 2rem' }}>{error}</div>}
-
-      <div className="packages-grid">
+      {/* =========================
+          PACKAGE LIST
+      ========================= */}
+      <div className="packages-container">
 
         {packages.map((pkg) => {
-          const isSelected = selectedPkg.id === pkg.id;
-          
-          let isDisabled = isProcessing || pkg.id === 'basic';
-          let btnText = pkg.buttonText;
-          
-          if (user?.subscriptionTier === 'PREMIUM') {
-            isDisabled = true;
-            btnText = pkg.id === 'premium' ? 'Đang sử dụng' : 'Không khả dụng';
-          } else if (user?.subscriptionTier === 'PRO') {
-            if (pkg.id === 'pro') {
-              isDisabled = true;
-              btnText = 'Đang sử dụng';
-            } else if (pkg.id === 'basic') {
-              isDisabled = true;
-              btnText = 'Không khả dụng';
-            }
-          } else {
-            if (pkg.id === 'basic') {
-              isDisabled = true;
-              btnText = 'Đang sử dụng';
-            }
-          }
+
+          const isSelected =
+            selectedPkg?.id === pkg.id;
+
+          const isCurrent =
+            (user?.subscriptionTier === 'BASIC' &&
+              pkg.id === 'basic') ||
+            (user?.subscriptionTier === 'PRO' &&
+              pkg.id === 'pro') ||
+            (user?.subscriptionTier === 'PREMIUM' &&
+              pkg.id === 'premium');
 
           return (
             <div
               key={pkg.id}
-              className={`package-card glass-card ${isSelected ? 'selected' : ''} ${pkg.isPopular ? 'popular' : ''}`}
-              onClick={() => setSelectedPkg(pkg)}
-              style={{ '--pkg-color': pkg.color }}
+              className={`package-card ${isSelected
+                  ? 'selected'
+                  : ''
+                } ${pkg.isPopular
+                  ? 'popular'
+                  : ''
+                }`}
+              onClick={() => {
+                setSelectedPkg(pkg);
+                setError('');
+              }}
             >
-              {pkg.isPopular && <div className="popular-badge">Phổ biến nhất</div>}
 
-              <div className="package-header">
-                <div className="icon-wrapper" style={{ color: pkg.color, backgroundColor: `${pkg.color}15` }}>
-                  {pkg.icon}
+              {/* Popular */}
+              {pkg.isPopular && (
+                <div className="package-popular">
+                  Phổ biến
                 </div>
-                <h3 className="package-name">{pkg.name}</h3>
-                <div className="package-price">
-                  <span className="amount">{pkg.priceStr}</span>
-                  <span className="period">/tháng</span>
-                </div>
-                <p className="package-desc">{pkg.description}</p>
+              )}
+
+              {/* Icon */}
+              <div
+                className="package-icon-wrapper"
+                style={{
+                  color: pkg.color
+                }}
+              >
+                {pkg.icon}
               </div>
 
-              <ul className="package-features">
-                {pkg.features.map((feature, idx) => (
-                  <li key={idx} className={!feature.included ? 'disabled' : ''}>
-                    {feature.included ? (
-                      <Check size={18} color="var(--success-500)" />
-                    ) : (
-                      <X size={18} color="var(--neutral-400)" />
-                    )}
-                    <span>{feature.text}</span>
-                  </li>
-                ))}
-              </ul>
+              {/* Name */}
+              <h3>
+                {pkg.name}
+              </h3>
 
-              <div className="package-footer">
-                <Button 
-                  className={`package-btn w-100 ${isSelected ? 'active' : ''}`}
-                  style={{
-                    backgroundColor: isSelected && !isDisabled ? pkg.color : '',
-                    borderColor: isSelected && !isDisabled ? pkg.color : ''
-                  }}
-                  disabled={isDisabled}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handlePayment(pkg);
-                  }}
-                >
-                  {isProcessing && isSelected ? <Zap className="spin" size={18} /> : null}
-                  {btnText}
-                </Button>
-                <div className="package-subtext">{pkg.subText}</div>
+              {/* Description */}
+              <p className="package-description">
+                {pkg.description}
+              </p>
+
+              {/* Price */}
+              <div className="package-price">
+                {pkg.priceStr}
               </div>
+
+              {/* Duration */}
+              {pkg.durationMonths && (
+                <div className="package-duration">
+                  {pkg.durationMonths} tháng
+                </div>
+              )}
+
+              {/* Features */}
+              <div className="package-features">
+
+                {pkg.features?.map(
+                  (feature, index) => (
+                    <div
+                      key={index}
+                      className={`package-feature ${feature.included
+                          ? ''
+                          : 'disabled'
+                        }`}
+                    >
+
+                      {feature.included ? (
+                        <Check
+                          size={18}
+                        />
+                      ) : (
+                        <X
+                          size={18}
+                        />
+                      )}
+
+                      <span>
+                        {feature.text}
+                      </span>
+
+                    </div>
+                  )
+                )}
+
+              </div>
+
+              {/* Button */}
+              <Button
+                type="button"
+                disabled={
+                  isProcessing ||
+                  isCurrent
+                }
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePayment(pkg);
+                }}
+              >
+                {isProcessing &&
+                  isSelected
+                  ? 'Đang xử lý...'
+                  : isCurrent
+                    ? 'Đang sử dụng'
+                    : pkg.buttonText}
+              </Button>
+
+              {/* Sub text */}
+              <div className="package-subtext">
+                {pkg.subText}
+              </div>
+
             </div>
           );
         })}
-      </div>
 
-      <div className="payment-action-container glass-card text-center" style={{ marginTop: '3rem' }}>
-        <h3 className="mb-2">Bạn đang chọn: <strong>{selectedPkg.name}</strong></h3>
-        <p className="text-neutral-500 mb-4">Tổng thanh toán: <strong style={{ color: 'var(--primary-600)', fontSize: '1.25rem' }}>{selectedPkg.priceStr}</strong></p>
-
-        {(() => {
-          let isDisabled = isProcessing || selectedPkg.id === 'basic';
-          let btnText = selectedPkg.price === 0 ? 'Gói mặc định của bạn' : (isProcessing ? 'Đang chuyển hướng...' : 'Thanh toán qua VietQR');
-          
-          if (user?.subscriptionTier === 'PREMIUM') {
-            isDisabled = true;
-            btnText = selectedPkg.id === 'premium' ? 'Bạn đang sử dụng gói này' : 'Không khả dụng (Bạn đã có gói cao hơn)';
-          } else if (user?.subscriptionTier === 'PRO') {
-            if (selectedPkg.id === 'pro') {
-              isDisabled = true;
-              btnText = 'Bạn đang sử dụng gói này';
-            } else if (selectedPkg.id === 'basic') {
-              isDisabled = true;
-              btnText = 'Không khả dụng (Bạn đã có gói cao hơn)';
-            }
-          } else {
-            if (selectedPkg.id === 'basic') {
-              isDisabled = true;
-              btnText = 'Bạn đang sử dụng gói này';
-            }
-          }
-
-          return (
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={() => handlePayment()}
-              disabled={isDisabled}
-              style={{ minWidth: '250px', fontSize: '1.1rem' }}
-            >
-              {btnText}
-            </Button>
-          );
-        })()}
-        {selectedPkg.price > 0 && (
-          <div className="payment-methods mt-3 text-neutral-400" style={{ fontSize: '0.85rem' }}>
-            Hỗ trợ quét mã QR qua mọi ứng dụng ngân hàng và ví điện tử tại Việt Nam.
-          </div>
-        )}
       </div>
     </div>
   );
+
+
+return (
+  <div className="premium-page-wrapper payment-page">
+    <div className="page-header text-center" style={{ alignItems: 'center', marginBottom: '3rem' }}>
+      <h1 className="page-title">Nâng cấp Tài khoản</h1>
+      <p className="page-description" style={{ maxWidth: '600px', margin: '0.5rem auto' }}>
+        Mở khóa toàn bộ sức mạnh của AI Student Hub với các gói cước siêu tiết kiệm. Thanh toán an toàn, nhanh chóng qua VietQR.
+      </p>
+    </div>
+
+    {user?.subscriptionTier === 'PREMIUM' && (
+      <div className="alert alert-success" style={{ maxWidth: '800px', margin: '0 auto 2rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <Crown size={24} color="#eab308" fill="#eab308" />
+        <div>
+          Tài khoản của bạn đang sử dụng <strong>Gói Chuyên gia (Premium)</strong>!
+          Còn <strong>{user?.premiumExpireAt ? Math.ceil((new Date(user.premiumExpireAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 30} ngày</strong> (hết hạn ngày <strong>{user?.premiumExpireAt ? new Date(user.premiumExpireAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''}</strong>). Hiện tại bạn không thể mua thêm.
+        </div>
+      </div>
+    )}
+    {user?.subscriptionTier === 'PRO' && (
+      <div className="alert alert-info" style={{ maxWidth: '800px', margin: '0 auto 2rem', display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', padding: '1rem', borderRadius: '12px' }}>
+        <Zap size={24} color="#0284c7" fill="#0284c7" />
+        <div>
+          <strong>Tài khoản của bạn đang sử dụng Gói Nâng cao (Pro)!</strong>
+          <br />
+          Bạn có thể nâng cấp lên Gói Chuyên gia để trải nghiệm đầy đủ tính năng.
+        </div>
+      </div>
+    )}
+
+    {error && <div className="alert alert-danger" style={{ maxWidth: '800px', margin: '0 auto 2rem' }}>{error}</div>}
+
+    <div className="packages-grid">
+
+      {packages.map((pkg) => {
+        const isSelected = selectedPkg.id === pkg.id;
+
+        let isDisabled = isProcessing || pkg.id === 'basic';
+        let btnText = pkg.buttonText;
+
+        if (user?.subscriptionTier === 'PREMIUM') {
+          isDisabled = true;
+          btnText = pkg.id === 'premium' ? 'Đang sử dụng' : 'Không khả dụng';
+        } else if (user?.subscriptionTier === 'PRO') {
+          if (pkg.id === 'pro') {
+            isDisabled = true;
+            btnText = 'Đang sử dụng';
+          } else if (pkg.id === 'basic') {
+            isDisabled = true;
+            btnText = 'Không khả dụng';
+          }
+        } else {
+          if (pkg.id === 'basic') {
+            isDisabled = true;
+            btnText = 'Đang sử dụng';
+          }
+        }
+
+        return (
+          <div
+            key={pkg.id}
+            className={`package-card glass-card ${isSelected ? 'selected' : ''} ${pkg.isPopular ? 'popular' : ''}`}
+            onClick={() => setSelectedPkg(pkg)}
+            style={{ '--pkg-color': pkg.color }}
+          >
+            {pkg.isPopular && <div className="popular-badge">Phổ biến nhất</div>}
+
+            <div className="package-header">
+              <div className="icon-wrapper" style={{ color: pkg.color, backgroundColor: `${pkg.color}15` }}>
+                {pkg.icon}
+              </div>
+              <h3 className="package-name">{pkg.name}</h3>
+              <div className="package-price">
+                <span className="amount">{pkg.priceStr}</span>
+                <span className="period">/tháng</span>
+              </div>
+              <p className="package-desc">{pkg.description}</p>
+            </div>
+
+            <ul className="package-features">
+              {pkg.features.map((feature, idx) => (
+                <li key={idx} className={!feature.included ? 'disabled' : ''}>
+                  {feature.included ? (
+                    <Check size={18} color="var(--success-500)" />
+                  ) : (
+                    <X size={18} color="var(--neutral-400)" />
+                  )}
+                  <span>{feature.text}</span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="package-footer">
+              <Button
+                className={`package-btn w-100 ${isSelected ? 'active' : ''}`}
+                style={{
+                  backgroundColor: isSelected && !isDisabled ? pkg.color : '',
+                  borderColor: isSelected && !isDisabled ? pkg.color : ''
+                }}
+                disabled={isDisabled}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePayment(pkg);
+                }}
+              >
+                {isProcessing && isSelected ? <Zap className="spin" size={18} /> : null}
+                {btnText}
+              </Button>
+              <div className="package-subtext">{pkg.subText}</div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+
+    <div className="payment-action-container glass-card text-center" style={{ marginTop: '3rem' }}>
+      <h3 className="mb-2">Bạn đang chọn: <strong>{selectedPkg.name}</strong></h3>
+      <p className="text-neutral-500 mb-4">Tổng thanh toán: <strong style={{ color: 'var(--primary-600)', fontSize: '1.25rem' }}>{selectedPkg.priceStr}</strong></p>
+
+      {(() => {
+        let isDisabled = isProcessing || selectedPkg.id === 'basic';
+        let btnText = selectedPkg.price === 0 ? 'Gói mặc định của bạn' : (isProcessing ? 'Đang chuyển hướng...' : 'Thanh toán qua VietQR');
+
+        if (user?.subscriptionTier === 'PREMIUM') {
+          isDisabled = true;
+          btnText = selectedPkg.id === 'premium' ? 'Bạn đang sử dụng gói này' : 'Không khả dụng (Bạn đã có gói cao hơn)';
+        } else if (user?.subscriptionTier === 'PRO') {
+          if (selectedPkg.id === 'pro') {
+            isDisabled = true;
+            btnText = 'Bạn đang sử dụng gói này';
+          } else if (selectedPkg.id === 'basic') {
+            isDisabled = true;
+            btnText = 'Không khả dụng (Bạn đã có gói cao hơn)';
+          }
+        } else {
+          if (selectedPkg.id === 'basic') {
+            isDisabled = true;
+            btnText = 'Bạn đang sử dụng gói này';
+          }
+        }
+
+        return (
+          <Button
+            variant="primary"
+            size="lg"
+            onClick={() => handlePayment()}
+            disabled={isDisabled}
+            style={{ minWidth: '250px', fontSize: '1.1rem' }}
+          >
+            {btnText}
+          </Button>
+        );
+      })()}
+      {selectedPkg.price > 0 && (
+        <div className="payment-methods mt-3 text-neutral-400" style={{ fontSize: '0.85rem' }}>
+          Hỗ trợ quét mã QR qua mọi ứng dụng ngân hàng và ví điện tử tại Việt Nam.
+        </div>
+      )}
+    </div>
+  </div>
+);
 };
 
 export default PaymentPackage;

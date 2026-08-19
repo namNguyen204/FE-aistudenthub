@@ -5,11 +5,24 @@ const paymentService = {
     const response = await api.get('/payment/packages');
     return response.data?.data || [];
   },
+  getPricingPlans: async () => {
+    const response = await api.get('/pricing-plans');
+    return response.data?.data || [];
+  },
 
   createPayment: async (amount, description, returnUrl, cancelUrl) => {
     const response = await api.post('/payment/create', {
       amount,
       description,
+      returnUrl,
+      cancelUrl
+    });
+    return response.data?.data;
+  },
+
+  createPaymentByPlan: async (planId, returnUrl, cancelUrl) => {
+    const response = await api.post('/payment/create', {
+      planId,
       returnUrl,
       cancelUrl
     });
