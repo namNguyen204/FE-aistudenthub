@@ -1,12 +1,26 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { FileText, Download, Trash2, X, Eye, AlertTriangle } from 'lucide-react';
 import Button from '../../components/Button/Button';
 import documentService from '../../services/document.service';
+import { getViolationReason } from '../../utils/violationReasons';
 
 const AdminDocumentPreviewModal = ({ isOpen, onClose, document, onDelete, onDmcaTakedown }) => {
   const [previewData, setPreviewData] = useState(null);
   const [fileUrl, setFileUrl] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    const body = globalThis.document.body;
+    const previousOverflow = body.style.overflow;
+    body.style.overflow = 'hidden';
+
+    return () => {
+      body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     if (isOpen && document?.id) {
@@ -50,29 +64,29 @@ const AdminDocumentPreviewModal = ({ isOpen, onClose, document, onDelete, onDmca
 
   if (!isOpen || !document) return null;
 
-  return (
+  const previewOverlay = (
     <div style={{
       position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.7)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000,
-      padding: '1.5rem'
+      inset: 0,
+      width: '100vw',
+      height: '100vh',
+      backgroundColor: '#ffffff',
+      zIndex: 9999,
+      padding: 0,
+      margin: 0,
+      overflow: 'hidden',
+      isolation: 'isolate'
     }}>
       <div style={{
         backgroundColor: '#ffffff',
-        borderRadius: '12px',
+        borderRadius: 0,
         width: '100%',
-        maxWidth: '900px',
-        maxHeight: '90vh',
+        maxWidth: 'none',
+        height: '100%',
+        maxHeight: 'none',
+        margin: 0,
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
         overflow: 'hidden'
       }}>
         {/* Header */}
@@ -82,14 +96,16 @@ const AdminDocumentPreviewModal = ({ isOpen, onClose, document, onDelete, onDmca
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          gap: '1rem',
+          flexShrink: 0,
           backgroundColor: 'var(--neutral-50)'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
             <div style={{ padding: '8px', backgroundColor: 'var(--primary-100)', color: 'var(--primary-700)', borderRadius: '8px' }}>
               <Eye size={22} />
             </div>
-            <div>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: 'var(--neutral-900)' }}>
+            <div style={{ minWidth: 0 }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 600, color: 'var(--neutral-900)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 [Admin Preview] {document.title}
               </h3>
               <p style={{ margin: '2px 0 0 0', fontSize: '13px', color: 'var(--neutral-500)' }}>
@@ -102,24 +118,28 @@ const AdminDocumentPreviewModal = ({ isOpen, onClose, document, onDelete, onDmca
               </p>
             </div>
           </div>
-          <button 
-            onClick={onClose} 
-            style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--neutral-500)', padding: '4px' }}
-          >
-            <X size={24} />
-          </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+            <button
+              onClick={onClose}
+              aria-label="Đóng bản xem trước"
+              style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--neutral-500)', padding: '4px' }}
+            >
+              <X size={24} />
+            </button>
+          </div>
         </div>
 
         {/* Content Body */}
         <div style={{
           flex: 1,
           padding: '1.5rem',
-          overflowY: 'auto',
+          overflow: 'auto',
           backgroundColor: '#f8fafc',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          minHeight: '400px'
+          minHeight: 0,
+          width: '100%'
         }}>
           {document.reports && document.reports.length > 0 && (
             <div style={{ width: '100%', marginBottom: '1rem', padding: '1rem', backgroundColor: 'var(--error-50)', border: '1px solid var(--error-200)', borderRadius: '8px' }}>
@@ -129,7 +149,7 @@ const AdminDocumentPreviewModal = ({ isOpen, onClose, document, onDelete, onDmca
               <ul style={{ margin: 0, paddingLeft: '1.5rem', color: 'var(--error-600)', fontSize: '14px' }}>
                 {document.reports.map((report, idx) => (
                   <li key={idx} style={{ marginBottom: '4px' }}>
-                    <strong>{report.reason || report.type || 'Vi phạm'}</strong>
+                    <strong>{getViolationReason(report.reason || report.type).label}</strong>
                     {report.details || report.description ? `: ${report.details || report.description}` : ''}
                   </li>
                 ))}
@@ -140,11 +160,11 @@ const AdminDocumentPreviewModal = ({ isOpen, onClose, document, onDelete, onDmca
           {loading ? (
             <div style={{ padding: '4rem', color: 'var(--neutral-500)' }}>Đang tải bản xem trước tài liệu...</div>
           ) : previewData?.previewMode === 'IMAGE' && fileUrl ? (
-            <img src={fileUrl} alt="Document Preview" style={{ maxWidth: '100%', maxHeight: '550px', objectFit: 'contain', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
+            <img src={fileUrl} alt="Document Preview" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} />
           ) : previewData?.previewMode === 'PDF' && fileUrl ? (
-            <iframe src={`${fileUrl}#toolbar=0`} style={{ width: '100%', height: '550px', border: 'none', borderRadius: '8px' }} title="PDF Preview" />
+            <iframe src={`${fileUrl}#toolbar=0`} style={{ width: '100%', height: '100%', flex: 1, minHeight: 0, border: 'none', borderRadius: '8px' }} title="PDF Preview" />
           ) : previewData?.previewMode === 'OFFICE' && previewData?.previewUrl ? (
-            <iframe src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(previewData.previewUrl)}`} style={{ width: '100%', height: '550px', border: 'none', borderRadius: '8px' }} title="Office Preview" />
+            <iframe src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(previewData.previewUrl)}`} style={{ width: '100%', height: '100%', flex: 1, minHeight: 0, border: 'none', borderRadius: '8px' }} title="Office Preview" />
           ) : previewData?.previewMode === 'TEXT' && previewData?.textContent ? (
             <div style={{ width: '100%', padding: '1.5rem', backgroundColor: '#ffffff', border: '1px solid var(--neutral-200)', borderRadius: '8px', fontFamily: 'monospace', whiteSpace: 'pre-wrap', maxHeight: '500px', overflowY: 'auto' }}>
               {previewData.textContent}
@@ -167,13 +187,16 @@ const AdminDocumentPreviewModal = ({ isOpen, onClose, document, onDelete, onDmca
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          gap: '1rem',
+          flexWrap: 'wrap',
+          flexShrink: 0,
           backgroundColor: '#ffffff'
         }}>
           <Button variant="outline" onClick={handleDownload}>
             <Download size={16} style={{ marginRight: '6px' }} /> Tải xuống
           </Button>
 
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
             <Button variant="outline" onClick={onClose}>Đóng</Button>
             {document.visibility === 'PUBLIC' && document.approvalStatus !== 'DMCA_TAKEN_DOWN' && onDmcaTakedown && (
               <Button 
@@ -184,18 +207,20 @@ const AdminDocumentPreviewModal = ({ isOpen, onClose, document, onDelete, onDmca
                 <AlertTriangle size={16} style={{ marginRight: '6px' }} /> Gỡ bỏ khẩn cấp (DMCA)
               </Button>
             )}
-            <Button 
+            {onDelete && <Button
               variant="primary" 
               style={{ backgroundColor: 'var(--error-600)', color: 'white' }} 
               onClick={() => { onClose(); onDelete(document.id); }}
             >
               <Trash2 size={16} style={{ marginRight: '6px' }} /> Xóa tài liệu vi phạm
-            </Button>
+            </Button>}
           </div>
         </div>
       </div>
     </div>
   );
+
+  return createPortal(previewOverlay, globalThis.document.body);
 };
 
 export default AdminDocumentPreviewModal;

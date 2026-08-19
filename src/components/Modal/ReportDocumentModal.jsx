@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Send, Flag, ShieldAlert, Loader2, ShieldCheck } from 'lucide-react';
 import Button from '../Button/Button';
 import documentService from '../../services/document.service';
+import { VIOLATION_REASONS, getViolationReason } from '../../utils/violationReasons';
 
 const ReportDocumentModal = ({ isOpen, onClose, documentTitle, documentId }) => {
   const [reason, setReason] = useState('');
@@ -10,12 +11,7 @@ const ReportDocumentModal = ({ isOpen, onClose, documentTitle, documentId }) => 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const reportReasons = [
-    { id: 'COPYRIGHT_VIOLATION', label: 'Vi phạm bản quyền' },
-    { id: 'INAPPROPRIATE_CONTENT', label: 'Nội dung không phù hợp' },
-    { id: 'SPAM', label: 'Spam hoặc quảng cáo' },
-    { id: 'OTHER', label: 'Lý do khác' }
-  ];
+  const selectedReason = getViolationReason(reason);
 
   // Reset form when modal opens
   React.useEffect(() => {
@@ -31,6 +27,10 @@ const ReportDocumentModal = ({ isOpen, onClose, documentTitle, documentId }) => 
     e.preventDefault();
     if (!reason) {
       setError('Vui lòng chọn lý do báo cáo.');
+      return;
+    }
+    if (description.trim().length < 20) {
+      setError('Vui lòng mô tả chi tiết vi phạm (ít nhất 20 ký tự), gồm bằng chứng và vị trí trong tài liệu.');
       return;
     }
 
@@ -91,8 +91,8 @@ const ReportDocumentModal = ({ isOpen, onClose, documentTitle, documentId }) => 
                   Lý do báo cáo <span style={{ color: 'var(--error-500)' }}>*</span>
                 </label>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {reportReasons.map((r) => (
-                    <label key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '14px', color: 'var(--neutral-700)' }}>
+                  {VIOLATION_REASONS.map((r) => (
+                    <label key={r.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', cursor: 'pointer', fontSize: '14px', color: 'var(--neutral-700)', padding: '8px', borderRadius: '8px', background: reason === r.id ? 'var(--error-50)' : 'transparent' }}>
                       <input 
                         type="radio" 
                         name="reportReason" 
@@ -102,7 +102,7 @@ const ReportDocumentModal = ({ isOpen, onClose, documentTitle, documentId }) => 
                         disabled={isSubmitting}
                         style={{ accentColor: 'var(--danger-500)', width: '16px', height: '16px' }}
                       />
-                      {r.label}
+                      <span><strong style={{ display: 'block' }}>{r.label}</strong><small style={{ color: 'var(--neutral-500)' }}>{r.guidance}</small></span>
                     </label>
                   ))}
                 </div>
@@ -110,12 +110,12 @@ const ReportDocumentModal = ({ isOpen, onClose, documentTitle, documentId }) => 
 
               <div style={{ marginBottom: '24px' }}>
                 <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: 'var(--neutral-700)', marginBottom: '8px' }}>
-                  Chi tiết thêm (không bắt buộc)
+                  Mô tả chi tiết vi phạm <span style={{ color: 'var(--error-500)' }}>*</span>
                 </label>
                 <textarea
                   className="form-control"
                   style={{ width: '100%', minHeight: '100px', padding: '12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--neutral-300)', fontSize: '14px' }}
-                  placeholder="Vui lòng cung cấp thêm thông tin giúp chúng tôi xử lý nhanh hơn..."
+                  placeholder={selectedReason.placeholder || 'Nêu bằng chứng và vị trí vi phạm trong tài liệu...'}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   disabled={isSubmitting}
@@ -126,7 +126,7 @@ const ReportDocumentModal = ({ isOpen, onClose, documentTitle, documentId }) => 
                 <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
                   Hủy
                 </Button>
-                <Button type="submit" style={{ backgroundColor: 'var(--danger-600)', color: 'white', borderColor: 'var(--danger-600)' }} disabled={isSubmitting || !reason}>
+                <Button type="submit" style={{ backgroundColor: 'var(--danger-600)', color: 'white', borderColor: 'var(--danger-600)' }} disabled={isSubmitting || !reason || description.trim().length < 20}>
                   {isSubmitting ? <Loader2 size={18} className="spin" /> : <Send size={18} />}
                   <span style={{ marginLeft: '8px' }}>Gửi báo cáo</span>
                 </Button>
