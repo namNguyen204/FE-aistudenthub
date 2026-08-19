@@ -51,8 +51,8 @@ const AdminDashboardHome = () => {
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Đang tải dữ liệu Dashboard...</div>;
 
   const formatCurrency = (value) => `${Number(value || 0).toLocaleString('vi-VN')}đ`;
-  const totalRevenue = businessStats?.successfulRevenue ?? businessStats?.totalRevenue ?? 0;
-  const totalTransactions = businessStats?.successfulTransactions ?? businessStats?.transactionCount ?? businessStats?.totalTransactions ?? 0;
+  const totalRevenue = businessStats?.totalRevenue ?? 0;
+  const totalTransactions = businessStats?.successfulTransactions ?? 0;
   const popularPackageKey = String(businessStats?.mostPopularPackage || '').toUpperCase();
   const popularPackage = {
     PRO: 'Gói Nâng cao',
