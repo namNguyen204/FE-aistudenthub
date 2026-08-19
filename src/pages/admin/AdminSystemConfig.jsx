@@ -36,11 +36,11 @@ const AdminSystemConfig = () => {
       }
       configObj['package.pro.price'] ??= '39000';
       configObj['package.premium.price'] ??= '79000';
-      
+
       setConfigs(configObj);
     } catch (err) {
       console.warn('Không thể tải cấu hình từ server, sử dụng cấu hình mặc định:', err);
-      
+
       // Fallback for UI if API missing
       setConfigs({
         'feature.ai_chat.enabled': true,
@@ -63,30 +63,52 @@ const AdminSystemConfig = () => {
       ...prev,
       [key]: !prev[key]
     }));
+
     setSuccessMsg('');
+    setError('');
   };
 
   const handleSave = async () => {
     const proPrice = Number(configs['package.pro.price']);
     const premiumPrice = Number(configs['package.premium.price']);
-    if (!Number.isInteger(proPrice) || proPrice < 1000 || !Number.isInteger(premiumPrice) || premiumPrice < 1000) {
-      setError('Giá gói phải là số nguyên và tối thiểu 1.000đ.');
+
+    // Validate PRO
+    if (!Number.isInteger(proPrice) || proPrice < 1000) {
+      setError('Giá gói PRO phải là số nguyên và tối thiểu 1.000đ.');
       return;
     }
+
+    // Validate PREMIUM
+    if (!Number.isInteger(premiumPrice) || premiumPrice < 1000) {
+      setError('Giá gói PREMIUM phải là số nguyên và tối thiểu 1.000đ.');
+      return;
+    }
+
     setSaving(true);
     setError('');
     setSuccessMsg('');
+
     try {
-      // Transform back to array if API expects it, or pass as object
-      await adminService.updateConfigs(configs);
-      setSuccessMsg('Đã lưu cấu hình hệ thống thành công!');
+      const configsToSave = {
+        ...configs,
+        'package.pro.price': String(proPrice),
+        'package.premium.price': String(premiumPrice)
+      };
+
+      await adminService.updateConfigs(configsToSave);
+
+      setSuccessMsg(
+        'Đã lưu cấu hình và giá PRO/PREMIUM thành công!'
+      );
     } catch (err) {
-      setError('Lỗi khi lưu cấu hình: ' + (err.response?.data?.message || err.message));
+      setError(
+        'Lỗi khi lưu cấu hình: ' +
+        (err.response?.data?.message || err.message)
+      );
     } finally {
       setSaving(false);
     }
   };
-
   return (
     <div className="premium-page-wrapper">
       <div className="page-header">
@@ -99,7 +121,7 @@ const AdminSystemConfig = () => {
           <Server size={20} color="var(--primary-600)" />
           <h3 className="dashboard-section-title">Tính năng hệ thống</h3>
         </div>
-        
+
         <div className="dashboard-section-body" style={{ padding: '2rem' }}>
           {error && (
             <div style={{ backgroundColor: 'var(--error-50)', color: 'var(--error-600)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -107,7 +129,7 @@ const AdminSystemConfig = () => {
               {error}
             </div>
           )}
-          
+
           {successMsg && (
             <div style={{ backgroundColor: 'var(--success-50)', color: 'var(--success-600)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Shield size={20} />
@@ -119,7 +141,7 @@ const AdminSystemConfig = () => {
             <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--neutral-500)' }}>Đang tải cấu hình...</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              
+
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', backgroundColor: 'var(--neutral-50)', borderRadius: 'var(--radius-md)', border: '1px solid var(--neutral-200)' }}>
                 <div>
                   <h4 style={{ margin: '0 0 0.25rem 0', color: 'var(--neutral-800)' }}>Tính năng AI Chat</h4>
@@ -182,8 +204,9 @@ const AdminSystemConfig = () => {
           )}
         </div>
       </div>
-      
-      <style dangerouslySetInnerHTML={{__html: `
+
+      <style dangerouslySetInnerHTML={{
+        __html: `
         .toggle-switch {
           position: relative;
           display: inline-block;
