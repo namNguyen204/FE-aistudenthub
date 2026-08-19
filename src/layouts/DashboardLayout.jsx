@@ -60,6 +60,7 @@ const DashboardLayout = () => {
     { name: 'Được chia sẻ với tôi', to: '/dashboard/shared-with-me', icon: <Share2 size={20} /> },
     { name: 'Trò chuyện AI', to: '/dashboard/chat', icon: <MessageSquare size={20} /> },
     { name: 'Tải lên Tài liệu', to: '/dashboard/upload', icon: <Upload size={20} /> },
+    { name: 'Nạp tiền / Gói cước', to: '/dashboard/payment', icon: <CreditCard size={20} /> },
     { name: 'Hồ sơ của tôi', to: '/dashboard/profile', icon: <Settings size={20} /> },
   ];
 
@@ -115,16 +116,7 @@ const DashboardLayout = () => {
               <span className="user-role">{role}</span>
             </div>
           </div>
-          {!isAdmin && (
-            <NavLink
-              to="/dashboard/payment"
-              className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-              style={{ padding: '12px 16px', borderRadius: '8px' }}
-            >
-              <CreditCard size={20} />
-              <span className="nav-item-text">Nạp tiền / Gói cước</span>
-            </NavLink>
-          )}
+
           <button className="logout-btn" onClick={logout} title="Đăng xuất">
             <LogOut size={18} />
             <span className="nav-item-text">Đăng xuất</span>

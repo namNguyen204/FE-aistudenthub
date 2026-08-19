@@ -5,6 +5,8 @@ import { Navigate } from 'react-router-dom';
 import adminService from '../../services/admin.service';
 import { useAuth } from '../../context/AuthContext';
 
+import ModeratorDashboardHome from './ModeratorDashboardHome';
+
 /** Admin Dashboard Home component with clean charts and business metrics. */
 const AdminDashboardHome = () => {
   const { user } = useAuth();
@@ -55,7 +57,7 @@ const AdminDashboardHome = () => {
   }, [daysFilter]);
 
   if (user?.role === 'ROLE_MODERATOR' || user?.role === 'MODERATOR') {
-    return <Navigate to="/admin/reports" replace />;
+    return <ModeratorDashboardHome />;
   }
 
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Đang tải dữ liệu Dashboard...</div>;
