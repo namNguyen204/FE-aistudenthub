@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Users, FileText, MessageSquare, ShieldAlert, AlertTriangle, DollarSign, TrendingUp, Crown, Star } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, LineChart, Line } from 'recharts';
+import { Navigate } from 'react-router-dom';
 import adminService from '../../services/admin.service';
+import { useAuth } from '../../context/AuthContext';
 
 const AdminDashboardHome = () => {
+  const { user } = useAuth();
   const [stats, setStats] = useState(null);
   const [businessStats, setBusinessStats] = useState(null);
   const [aiUsage, setAiUsage] = useState(null);
@@ -15,6 +18,8 @@ const AdminDashboardHome = () => {
   const [daysFilter, setDaysFilter] = useState(30);
 
   useEffect(() => {
+    if (user?.role === 'ROLE_MODERATOR' || user?.role === 'MODERATOR') return;
+
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -44,6 +49,10 @@ const AdminDashboardHome = () => {
     };
     fetchData();
   }, [daysFilter]);
+
+  if (user?.role === 'ROLE_MODERATOR' || user?.role === 'MODERATOR') {
+    return <Navigate to="/admin/reports" replace />;
+  }
 
   if (loading) return <div style={{ padding: '2rem', textAlign: 'center' }}>Đang tải dữ liệu Dashboard...</div>;
 

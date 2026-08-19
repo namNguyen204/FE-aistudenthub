@@ -141,7 +141,11 @@ const adminService = {
   },
 
   resolveReport: async (reportId, decision, moderatorNote) => {
-    const response = await api.put(`/admin/reports/${reportId}/resolve`, { decision, moderatorNote });
+    const payload = { decision };
+    if (moderatorNote && moderatorNote.trim() !== '') {
+      payload.moderatorNote = moderatorNote.trim();
+    }
+    const response = await api.put(`/admin/reports/${reportId}/resolve`, payload);
     return response.data;
   },
 

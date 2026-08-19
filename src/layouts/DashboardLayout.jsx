@@ -72,7 +72,13 @@ const DashboardLayout = () => {
     { name: 'Cài đặt Hệ thống', to: '/admin/settings', icon: <Shield size={20} /> },
   ];
 
-  const navigation = isAdmin ? adminNavigation : userNavigation;
+  const moderatorNavigation = [
+    { name: 'Quản lý Tài liệu', to: '/admin/documents', icon: <FileText size={20} /> },
+    { name: 'Báo cáo vi phạm', to: '/admin/reports', icon: <Flag size={20} /> },
+    { name: 'Quản lý Chat', to: '/admin/chats', icon: <MessageSquare size={20} /> },
+  ];
+
+  const navigation = role === 'ADMIN' ? adminNavigation : (role === 'MODERATOR' ? moderatorNavigation : userNavigation);
 
   return (
     <div className={`dashboard-layout ${isSidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>

@@ -72,7 +72,8 @@ const AdminReportList = () => {
     if (!decision) return;
     setIsProcessing(true);
     try {
-      await adminService.resolveReport(selectedReport.id, decision, moderatorNote);
+      const reportId = selectedReport.reportId || selectedReport.id;
+      await adminService.resolveReport(reportId, decision, moderatorNote);
       setResolveModalOpen(false);
       setSelectedReport(null);
       fetchReports();
@@ -254,7 +255,7 @@ const AdminReportList = () => {
                   </tr>
                 ) : (
                   reports.map(report => (
-                    <tr key={report.id} style={{ borderBottom: '1px solid var(--neutral-100)' }}>
+                    <tr key={report.reportId || report.id} style={{ borderBottom: '1px solid var(--neutral-100)' }}>
                       <td style={{ padding: '1rem 0.5rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                         <FileText size={20} color="var(--primary-500)" />
                         <span style={{ maxWidth: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -346,7 +347,7 @@ const AdminReportList = () => {
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>Ghi chú của Moderator (Tùy chọn)</label>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, marginBottom: '8px' }}>Ghi chú (Tùy chọn)</label>
               <textarea 
                 className="form-control" 
                 style={{ width: '100%', minHeight: '80px', padding: '12px', borderRadius: '8px', border: '1px solid var(--neutral-300)' }} 
