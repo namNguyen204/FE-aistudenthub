@@ -74,6 +74,7 @@ const DashboardLayout = () => {
   ];
 
   const moderatorNavigation = [
+    { name: 'Dashboard', to: '/admin', icon: <BarChart size={20} /> },
     { name: 'Quản lý Tài liệu', to: '/admin/documents', icon: <FileText size={20} /> },
     { name: 'Báo cáo vi phạm', to: '/admin/reports', icon: <Flag size={20} /> },
     { name: 'Quản lý Chat', to: '/admin/chats', icon: <MessageSquare size={20} /> },
