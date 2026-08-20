@@ -233,7 +233,7 @@ const PaymentPackage = () => {
       setIsProcessing(false);
     }
   };
-  
+
   return (
     <div className="premium-page-wrapper payment-page">
       <div className="page-header text-center" style={{ alignItems: 'center', marginBottom: '3rem' }}>
@@ -252,11 +252,14 @@ const PaymentPackage = () => {
           </div>
         </div>
       )}
+
       {user?.subscriptionTier === 'PRO' && (
         <div className="alert alert-info" style={{ maxWidth: '800px', margin: '0 auto 2rem', display: 'flex', alignItems: 'center', gap: '10px', backgroundColor: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd', padding: '1rem', borderRadius: '12px' }}>
           <Zap size={24} color="#0284c7" fill="#0284c7" />
           <div>
             <strong>Tài khoản của bạn đang sử dụng Gói Nâng cao (Pro)!</strong>
+            <br />
+            Còn <strong>{user?.premiumExpireAt ? Math.ceil((new Date(user.premiumExpireAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : 30} ngày</strong> (hết hạn ngày <strong>{user?.premiumExpireAt ? new Date(user.premiumExpireAt).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : ''}</strong>).
             <br />
             Bạn có thể nâng cấp lên Gói Chuyên gia để trải nghiệm đầy đủ tính năng.
           </div>
