@@ -167,7 +167,7 @@ const AdminUserList = () => {
                   </tr>
                 ) : (
                   users.map(user => {
-                    const plan = getPlanStyle(user.subscriptionTier, user.premium);
+                    const plan = getPlanStyle(user.subscriptionTier, user.isPremium);
                     return (
                       <tr key={user.id} style={{ borderBottom: '1px solid var(--neutral-100)' }}>
                         <td style={{ padding: '1rem 0.5rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
