@@ -1,8 +1,10 @@
 .chat-page-wrapper {
   display: flex;
-  height: calc(100vh - 80px); /* Adjust based on your header height */
-  margin: calc(var(--spacing-6) * -1); /* Override parent padding to fill screen */
+  /* Cancel out dashboard-content padding (--spacing-8 = 32px) */
+  margin: calc(-1 * var(--spacing-8));
+  height: calc(100vh - 72px); /* only subtract the header height */
   background-color: var(--neutral-50);
+  overflow: hidden;
 }
 
 .chat-sidebar {

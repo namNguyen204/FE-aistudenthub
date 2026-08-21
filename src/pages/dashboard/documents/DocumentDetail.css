@@ -1,7 +1,11 @@
 .document-detail-container {
   display: flex;
-  height: calc(100vh - 136px); /* header 72px + padding top 32px + padding bottom 32px */
+  /* Cancel out the dashboard-content padding (--spacing-8 = 32px) so no outer scrollbar */
+  margin: calc(-1 * var(--spacing-8));
+  height: calc(100vh - 72px); /* only subtract the header height */
   gap: var(--spacing-6);
+  padding: var(--spacing-6);
+  box-sizing: border-box;
   animation: slideUpFade 0.5s ease-out forwards;
 }
 
