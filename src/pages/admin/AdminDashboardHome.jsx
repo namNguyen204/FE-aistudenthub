@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, FileText, MessageSquare, ShieldAlert, AlertTriangle, DollarSign, TrendingUp, Crown, Star, Flag, Clock, CheckCircle } from 'lucide-react';
+import { Users, FileText, MessageSquare, ShieldAlert, AlertTriangle, DollarSign, TrendingUp, Crown } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, LineChart, Line } from 'recharts';
 import { Navigate } from 'react-router-dom';
 import adminService from '../../services/admin.service';
@@ -16,7 +16,7 @@ const AdminDashboardHome = () => {
   const [typeStats, setTypeStats] = useState([]);
   const [uploadTrend, setUploadTrend] = useState([]);
   const [revenueTrend, setRevenueTrend] = useState([]);
-  const [violationStats, setViolationStats] = useState({});
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [daysFilter, setDaysFilter] = useState(30);
@@ -27,14 +27,13 @@ const AdminDashboardHome = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [statsData, businessData, aiData, typeData, trendData, revenueData, violationData] = await Promise.all([
+        const [statsData, businessData, aiData, typeData, trendData, revenueData] = await Promise.all([
           adminService.getDashboardStats(),
           adminService.getBusinessStats(),
           adminService.getAiUsage(),
           adminService.getDocumentTypeStats(),
           adminService.getUploadTrend(daysFilter),
-          adminService.getRevenueTrend(daysFilter),
-          adminService.getViolationStats().catch(() => null)
+          adminService.getRevenueTrend(daysFilter)
         ]);
         setStats(statsData);
         setBusinessStats(businessData);
@@ -45,7 +44,6 @@ const AdminDashboardHome = () => {
         // Assuming backend returns [{ date: '2023-10-01', count: 5 }, ...]
         setUploadTrend(trendData || []);
         setRevenueTrend(revenueData || []);
-        setViolationStats(violationData || {});
       } catch (err) {
         setError('Không thể tải dữ liệu thống kê');
         console.error(err);
@@ -189,20 +187,7 @@ const AdminDashboardHome = () => {
 
       </div>
 
-      <h3 style={{ marginBottom: '1rem', color: 'var(--neutral-700)' }}>Thống kê vi phạm</h3>
-      <div className="stats-grid" style={{ marginBottom: '2rem' }}>
-        {[
-          ['Tổng báo cáo', violationStats.totalReports ?? violationStats.total ?? 0, Flag, 'danger'],
-          ['Chờ xử lý', violationStats.pendingReports ?? violationStats.pending ?? 0, Clock, 'warning'],
-          ['Vi phạm đã xác nhận', violationStats.resolvedReports ?? violationStats.resolved ?? 0, ShieldAlert, 'danger'],
-          ['Báo cáo bị bác bỏ', violationStats.dismissedReports ?? violationStats.dismissed ?? 0, CheckCircle, 'success']
-        ].map(([label, value, Icon, tone]) => (
-          <div className="stat-card" key={label}>
-            <div className={`stat-icon ${tone}`}><Icon size={24} /></div>
-            <div className="stat-info"><div className="stat-value">{Number(value).toLocaleString('vi-VN')}</div><div className="stat-label">{label}</div></div>
-          </div>
-        ))}
-      </div>
+
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem', gap: '8px' }}>
         <button

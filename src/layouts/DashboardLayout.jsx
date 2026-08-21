@@ -67,8 +67,6 @@ const DashboardLayout = () => {
   const adminNavigation = [
     { name: 'Dashboard', to: '/admin', icon: <BarChart size={20} /> },
     { name: 'Quản lý Người dùng', to: '/admin/users', icon: <Users size={20} /> },
-    { name: 'Quản lý Tài liệu', to: '/admin/documents', icon: <FileText size={20} /> },
-    { name: 'Báo cáo vi phạm', to: '/admin/reports', icon: <Flag size={20} /> },
     { name: 'Quản lý Chat', to: '/admin/chats', icon: <MessageSquare size={20} /> },
     { name: 'Cài đặt Hệ thống', to: '/admin/settings', icon: <Shield size={20} /> },
   ];
@@ -77,7 +75,6 @@ const DashboardLayout = () => {
     { name: 'Dashboard', to: '/admin', icon: <BarChart size={20} /> },
     { name: 'Quản lý Tài liệu', to: '/admin/documents', icon: <FileText size={20} /> },
     { name: 'Báo cáo vi phạm', to: '/admin/reports', icon: <Flag size={20} /> },
-    { name: 'Quản lý Chat', to: '/admin/chats', icon: <MessageSquare size={20} /> },
   ];
 
   const navigation = role === 'ADMIN' ? adminNavigation : (role === 'MODERATOR' ? moderatorNavigation : userNavigation);
