@@ -6,18 +6,38 @@ import Modal from '../../components/Modal/Modal';
 import ConfirmDeleteModal from '../../components/Modal/ConfirmDeleteModal';
 
 // Ánh xạ planName từ BE → style badge tương ứng
-const getPlanStyle = (planName = '', isPremium = false) => {
-  if (!isPremium) {
-    return { label: 'Cơ bản', backgroundColor: 'var(--neutral-100)', color: 'var(--neutral-600)' };
+const getPlanStyle = (subscriptionTier = 'BASIC', isPremium = false) => {
+  const tier = (subscriptionTier || 'BASIC').toUpperCase();
+
+  if (!isPremium || tier === 'BASIC') {
+    return {
+      label: 'Cơ bản',
+      backgroundColor: 'var(--neutral-100)',
+      color: 'var(--neutral-600)'
+    };
   }
-  const name = (planName || '').toLowerCase();
-  if (name.includes('chuyên gia') || name.includes('expert')) {
-    return { label: planName || 'Chuyên gia', backgroundColor: 'var(--danger-50)', color: 'var(--danger-600)' };
+
+  if (tier === 'PREMIUM') {
+    return {
+      label: 'Chuyên gia',
+      backgroundColor: 'var(--danger-50)',
+      color: 'var(--danger-600)'
+    };
   }
-  if (name.includes('nâng cao') || name.includes('advanced') || name.includes('pro')) {
-    return { label: planName || 'Nâng cao', backgroundColor: 'var(--warning-50)', color: 'var(--warning-600)' };
+
+  if (tier === 'PRO') {
+    return {
+      label: 'Nâng cao',
+      backgroundColor: 'var(--warning-50)',
+      color: 'var(--warning-600)'
+    };
   }
-  return { label: planName || 'Premium', backgroundColor: 'var(--primary-50)', color: 'var(--primary-600)' };
+
+  return {
+    label: 'Cơ bản',
+    backgroundColor: 'var(--neutral-100)',
+    color: 'var(--neutral-600)'
+  };
 };
 
 const AdminUserList = () => {
@@ -147,7 +167,7 @@ const AdminUserList = () => {
                   </tr>
                 ) : (
                   users.map(user => {
-                    const plan = getPlanStyle(user.planName, user.premium);
+                    const plan = getPlanStyle(user.subscriptionTier, user.premium);
                     return (
                       <tr key={user.id} style={{ borderBottom: '1px solid var(--neutral-100)' }}>
                         <td style={{ padding: '1rem 0.5rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
