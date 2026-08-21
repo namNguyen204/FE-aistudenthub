@@ -227,6 +227,37 @@ const adminService = {
   deleteChatSession: async (id, reason = 'Vi phạm chính sách nội dung') => {
     const response = await api.delete(`/admin/chats/${id}`, { data: { reason } });
     return response.data?.message;
+  },
+
+  // ---- Pricing Plans ----
+  getPricingPlans: async () => {
+    try {
+      const response = await api.get('/admin/pricing-plans');
+      if (response.data?.data) return response.data.data;
+    } catch (e) {
+      console.warn('Primary admin pricing plans failed, fallback to public:', e);
+    }
+    try {
+      const response = await api.get('/pricing-plans');
+      return response.data?.data || [];
+    } catch {
+      return [];
+    }
+  },
+
+  createPricingPlan: async (data) => {
+    const response = await api.post('/admin/pricing-plans', data);
+    return response.data?.data;
+  },
+
+  updatePricingPlan: async (id, data) => {
+    try {
+      const response = await api.put(`/admin/pricing-plans/${id}`, data);
+      return response.data?.data;
+    } catch (err) {
+      const response = await api.patch(`/admin/pricing-plans/${id}`, data);
+      return response.data?.data;
+    }
   }
 };
 

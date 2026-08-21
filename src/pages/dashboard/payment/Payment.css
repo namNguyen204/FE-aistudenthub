@@ -28,6 +28,22 @@
   box-shadow: 0 10px 30px rgba(0,0,0,0.05), 0 0 0 1px var(--pkg-color);
 }
 
+.package-card.inactive-package {
+  opacity: 0.5;
+  filter: grayscale(100%);
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+  user-select: none;
+  background-color: var(--neutral-100) !important;
+  border-color: var(--neutral-300) !important;
+  box-shadow: none !important;
+}
+
+.package-card.inactive-package:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
 .popular-badge {
   position: absolute;
   top: -12px;

@@ -68,6 +68,7 @@ const DashboardLayout = () => {
     { name: 'Dashboard', to: '/admin', icon: <BarChart size={20} /> },
     { name: 'Quản lý Người dùng', to: '/admin/users', icon: <Users size={20} /> },
     { name: 'Quản lý Chat', to: '/admin/chats', icon: <MessageSquare size={20} /> },
+    { name: 'Gói dịch vụ', to: '/admin/subscription-plans', icon: <CreditCard size={20} /> },
     { name: 'Cài đặt Hệ thống', to: '/admin/settings', icon: <Shield size={20} /> },
   ];
 

@@ -32,6 +32,7 @@ import AdminDocumentList from '../admin/AdminDocumentList';
 import AdminChatModeration from '../admin/AdminChatModeration';
 import AdminSystemConfig from '../admin/AdminSystemConfig';
 import AdminReportList from '../admin/AdminReportList';
+import AdminSubscriptionPlans from '../admin/AdminSubscriptionPlans';
 
 // Payment
 import PaymentPackage from './payment/PaymentPackage';
@@ -49,6 +50,7 @@ export {
   AdminChatModeration,
   AdminSystemConfig,
   AdminReportList,
+  AdminSubscriptionPlans,
   PaymentPackage,
   PaymentSuccess,
   PaymentCancel,

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Users, FileText, MessageSquare, ShieldAlert, AlertTriangle, DollarSign, TrendingUp, Crown } from 'lucide-react';
+import { Users, FileText, MessageSquare, ShieldAlert, AlertTriangle, DollarSign, TrendingUp, Crown, Eye, Download, Flame, BookOpen, Award, User, Lock, CreditCard, Clock, ChevronRight } from 'lucide-react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, LineChart, Line } from 'recharts';
 import { Navigate } from 'react-router-dom';
+import { formatDistanceToNow } from 'date-fns';
+import { vi } from 'date-fns/locale';
 import adminService from '../../services/admin.service';
 import { useAuth } from '../../context/AuthContext';
 
@@ -15,6 +17,9 @@ const AdminDashboardHome = () => {
   const [aiUsage, setAiUsage] = useState(null);
   const [uploadTrend, setUploadTrend] = useState([]);
   const [revenueTrend, setRevenueTrend] = useState([]);
+  const [topDocs, setTopDocs] = useState([]);
+  const [subjectStats, setSubjectStats] = useState([]);
+  const [recentActivities, setRecentActivities] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -26,21 +31,109 @@ const AdminDashboardHome = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [statsData, businessData, aiData, trendData, revenueData] = await Promise.all([
+        const [statsData, businessData, aiData, trendData, revenueData, docsData, usersData, reportsData] = await Promise.all([
           adminService.getDashboardStats(),
           adminService.getBusinessStats(),
           adminService.getAiUsage(),
           adminService.getUploadTrend(daysFilter),
-          adminService.getRevenueTrend(daysFilter)
+          adminService.getRevenueTrend(daysFilter),
+          adminService.getAllDocuments('', 0, 50).catch(() => ({ content: [] })),
+          adminService.getUsers('', 0, 50).catch(() => ({ content: [] })),
+          adminService.getReports({ page: 0, size: 50 }).catch(() => ({ content: [] }))
         ]);
         setStats(statsData);
         setBusinessStats(businessData);
         setAiUsage(aiData);
-
-        // Ensure trendData is in the correct format for recharts
-        // Assuming backend returns [{ date: '2023-10-01', count: 5 }, ...]
         setUploadTrend(trendData || []);
         setRevenueTrend(revenueData || []);
+
+        const docs = docsData?.content || docsData?.data || (Array.isArray(docsData) ? docsData : []);
+        const usersList = usersData?.content || usersData?.data || (Array.isArray(usersData) ? usersData : []);
+        const reportsList = reportsData?.content || reportsData?.data || (Array.isArray(reportsData) ? reportsData : []);
+
+        // Sort top 5 docs by view/download engagement
+        const sortedDocs = [...docs]
+          .sort((a, b) => ((b.viewCount || 0) + (b.downloadCount || 0) * 2) - ((a.viewCount || 0) + (a.downloadCount || 0) * 2))
+          .slice(0, 5);
+        setTopDocs(sortedDocs);
+
+        // Group subject counts
+        const counts = {};
+        docs.forEach(d => {
+          const subj = d.subject || 'Môn học chung';
+          counts[subj] = (counts[subj] || 0) + 1;
+        });
+        const totalDocsCount = docs.length || 1;
+        const formattedSubjects = Object.keys(counts).map(name => ({
+          name,
+          count: counts[name],
+          percentage: Math.round((counts[name] / totalDocsCount) * 100)
+        })).sort((a, b) => b.count - a.count).slice(0, 5);
+
+        setSubjectStats(formattedSubjects);
+
+        // Construct 100% Dynamic Recent Activities feed from real backend data
+        const activities = [];
+
+        usersList.slice(0, 4).forEach(u => {
+          const name = u.fullName || u.email || 'Người dùng';
+          if (u.active === false || u.enabled === false || u.status === 'DISABLED' || u.status === 'LOCKED') {
+            activities.push({
+              id: `user-lock-${u.id}`,
+              icon: <Lock size={18} color="#EF4444" />,
+              text: `Tài khoản ${name} đã bị khóa / ngưng hoạt động`,
+              timestamp: u.updatedAt || u.createdAt || new Date().toISOString()
+            });
+          } else {
+            activities.push({
+              id: `user-reg-${u.id}`,
+              icon: <User size={18} color="#8B5CF6" />,
+              text: `Người dùng ${name} vừa đăng ký tài khoản (${u.role || 'USER'})`,
+              timestamp: u.createdAt || new Date().toISOString()
+            });
+          }
+        });
+
+        docs.slice(0, 5).forEach(doc => {
+          const uploader = doc.uploaderFullName || doc.uploaderEmail || 'Sinh viên';
+          if (doc.approvalStatus === 'DMCA_TAKEN_DOWN') {
+            activities.push({
+              id: `doc-dmca-${doc.id}`,
+              icon: <ShieldAlert size={18} color="#EF4444" />,
+              text: `Tài liệu "${doc.title}" bị gỡ bỏ khẩn cấp (DMCA)`,
+              timestamp: doc.updatedAt || doc.createdAt || new Date().toISOString()
+            });
+          } else if (doc.approvalStatus === 'REJECTED') {
+            activities.push({
+              id: `doc-reject-${doc.id}`,
+              icon: <AlertTriangle size={18} color="#F59E0B" />,
+              text: `Tài liệu "${doc.title}" bị từ chối công khai`,
+              timestamp: doc.updatedAt || doc.createdAt || new Date().toISOString()
+            });
+          } else {
+            activities.push({
+              id: `doc-upload-${doc.id}`,
+              icon: <FileText size={18} color="#3B82F6" />,
+              text: `User ${uploader} vừa upload tài liệu "${doc.title}"`,
+              timestamp: doc.createdAt || new Date().toISOString()
+            });
+          }
+        });
+
+        reportsList.slice(0, 4).forEach(rep => {
+          const code = String(rep.id || '').slice(0, 6).toUpperCase();
+          const st = rep.status === 'RESOLVED' ? 'Đã gỡ tệp' : rep.status === 'DISMISSED' ? 'Bác bỏ' : 'Chờ xử lý';
+          activities.push({
+            id: `rep-${rep.id}`,
+            icon: <ShieldAlert size={18} color="#06B6D4" />,
+            text: `Moderator xử lý báo cáo vi phạm #${code} [${st}]`,
+            timestamp: rep.createdAt || rep.updatedAt || new Date().toISOString()
+          });
+        });
+
+        activities.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+        setRecentActivities(activities.slice(0, 6));
+
       } catch (err) {
         setError('Không thể tải dữ liệu thống kê');
         console.error(err);
@@ -132,7 +225,7 @@ const AdminDashboardHome = () => {
           </div>
           <div className="stat-info">
             <div className="stat-value">{formatCurrency(totalRevenue)}</div>
-            <div className="stat-label">Doanh thu từ giao dịch thành công</div>
+            <div className="stat-label">Tổng doanh thu</div>
           </div>
         </div>
 
@@ -236,6 +329,38 @@ const AdminDashboardHome = () => {
           ) : (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'var(--neutral-500)' }}>
               Chưa có dữ liệu upload
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Recent Activities */}
+      <div className="dashboard-section glass-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--neutral-200)', paddingBottom: '0.75rem' }}>
+          <h3 style={{ margin: 0, color: 'var(--neutral-800)', fontSize: '18px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Clock size={20} color="var(--primary-600)" /> Hoạt động gần đây
+          </h3>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {recentActivities.length > 0 ? (
+            recentActivities.map((act) => (
+              <div key={act.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: '10px', backgroundColor: 'var(--neutral-50)', border: '1px solid var(--neutral-100)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+                  <div style={{ padding: '8px', borderRadius: '8px', backgroundColor: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    {act.icon}
+                  </div>
+                  <span style={{ fontSize: '14px', fontWeight: 500, color: 'var(--neutral-800)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {act.text}
+                  </span>
+                </div>
+                <span style={{ fontSize: '13px', color: 'var(--neutral-500)', whiteSpace: 'nowrap', marginLeft: '16px', fontWeight: 500 }}>
+                  {formatDistanceToNow(new Date(act.timestamp), { addSuffix: true, locale: vi })}
+                </span>
+              </div>
+            ))
+          ) : (
+            <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--neutral-500)', fontSize: '14px' }}>
+              Chưa có hoạt động gần đây trong hệ thống
             </div>
           )}
         </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CreditCard, Zap, Crown, CheckCircle2, BookOpen, Check, X } from 'lucide-react';
+import { CreditCard, Zap, Crown, CheckCircle2, BookOpen, Check, X, AlertTriangle } from 'lucide-react';
 import Button from '../../../components/Button/Button';
 import paymentService from '../../../services/payment.service';
 import { useAuth } from '../../../context/AuthContext';
@@ -75,72 +75,112 @@ const PaymentPackage = () => {
 
   useEffect(() => {
     const loadPricingPlans = async () => {
+      let localPlans = [];
       try {
-        const remotePlans = await paymentService.getPricingPlans();
-
-        if (!Array.isArray(remotePlans)) return;
-
-        const merged = PACKAGES.map((pkg) => {
-          if (pkg.id === 'basic') {
-            return pkg;
+        const saved = localStorage.getItem('admin_subscription_plans_v2');
+        if (saved) {
+          localPlans = JSON.parse(saved);
+          // Sanitize corrupted cache where pro was mapped to premium price 79000
+          const proItem = localPlans.find(l => l.id === 'pro');
+          if (proItem && (proItem.price >= 79000 || proItem.aiDailyLimit >= 15)) {
+            proItem.price = 39000;
+            proItem.aiDailyLimit = 10;
+            proItem.documentLimit = 100;
+            proItem.storageMb = 50;
+            localStorage.setItem('admin_subscription_plans_v2', JSON.stringify(localPlans));
           }
+        }
+      } catch (e) {}
 
-          // Frontend PRO = Backend STUDENT
-          // Frontend PREMIUM = Backend PRO
-          const backendPlanName =
-            pkg.id === 'pro' ? 'STUDENT' : 'PRO';
+      let remotePlans = [];
+      try {
+        remotePlans = await paymentService.getPricingPlans();
+      } catch (err) {
+        console.warn('Không thể tải PricingPlan từ API:', err);
+      }
 
-          const plan = remotePlans.find(
-            (item) =>
-              String(item.name || '')
-                .trim()
-                .toUpperCase() === backendPlanName
-          );
+      const merged = PACKAGES.map((pkg) => {
+        // Find matching plan from local admin edits first by exact id
+        const localItem = localPlans.find(l => l.id === pkg.id);
 
-          if (!plan) {
-            return pkg;
+        // BE mapping:
+        // BE 'STUDENT' = Gói Nâng cao (pro)
+        // BE 'PRO' = Gói Chuyên gia (premium)
+        // BE 'BASIC' = Gói Cơ bản (basic)
+        let remoteItem = null;
+        if (Array.isArray(remotePlans) && remotePlans.length > 0) {
+          if (pkg.id === 'pro') {
+            remoteItem = remotePlans.find(r => {
+              const name = String(r.name || '').trim().toUpperCase();
+              return name === 'STUDENT' || name === 'NÂNG CAO' || name === 'GÓI NÂNG CAO';
+            }) || remotePlans.find(r => Number(r.price) > 0 && Number(r.price) < 70000);
+          } else if (pkg.id === 'premium') {
+            remoteItem = remotePlans.find(r => {
+              const name = String(r.name || '').trim().toUpperCase();
+              return name === 'PRO' || name === 'PREMIUM' || name === 'CHUYÊN GIA' || name === 'GÓI CHUYÊN GIA';
+            }) || remotePlans.find(r => Number(r.price) >= 70000);
+          } else if (pkg.id === 'basic') {
+            remoteItem = remotePlans.find(r => {
+              const name = String(r.name || '').trim().toUpperCase();
+              return name === 'BASIC' || name === 'FREE' || name === 'CƠ BẢN' || name === 'GÓI CƠ BẢN' || Number(r.price) === 0;
+            });
           }
+        }
 
-          const price = Number(plan.price);
+        const defaultPrice = pkg.id === 'basic' ? 0 : (pkg.id === 'pro' ? 39000 : 79000);
+        const defaultAi = pkg.id === 'basic' ? 5 : (pkg.id === 'pro' ? 10 : 15);
+        const defaultDoc = pkg.id === 'basic' ? 50 : (pkg.id === 'pro' ? 100 : 150);
+        const defaultStorage = pkg.id === 'basic' ? 10 : (pkg.id === 'pro' ? 50 : 100);
 
-          return {
-            ...pkg,
+        const effectivePrice = remoteItem ? Number(remoteItem.price) : (localItem?.price ?? defaultPrice);
+        const effectiveAiLimit = remoteItem?.aiDailyLimit ?? (localItem?.aiDailyLimit ?? defaultAi);
+        const effectiveDocLimit = remoteItem?.documentLimit ?? (localItem?.documentLimit ?? defaultDoc);
+        const effectiveStorageMb = remoteItem?.storageMb ?? (localItem?.storageMb ?? defaultStorage);
+        let effectiveActive = true;
+        if (localItem && localItem.active === false) {
+          effectiveActive = false;
+        } else if (Array.isArray(remotePlans) && remotePlans.length > 0) {
+          if (pkg.id !== 'basic' && !remoteItem) {
+            effectiveActive = false;
+          } else if (remoteItem && remoteItem.active === false) {
+            effectiveActive = false;
+          }
+        }
 
-            // ID frontend vẫn giữ nguyên
-            id: pkg.id,
-
-            // Lưu ID PricingPlan để thanh toán
-            planId: plan.id,
-
-            // Giá lấy từ DB
-            price,
-
-            priceStr:
-              price === 0
-                ? 'Miễn phí'
-                : `${price.toLocaleString('vi-VN')}đ`,
-
-            // Có thể lấy giới hạn từ backend
-            aiDailyLimit: plan.aiDailyLimit,
-            documentLimit: plan.documentLimit,
-            durationMonths: plan.durationMonths
-          };
+        // Dynamically update features array for User FE
+        const dynamicFeatures = pkg.features.map(feat => {
+          if (feat.text.includes('câu hỏi AI')) {
+            return { ...feat, text: `${effectiveAiLimit} câu hỏi AI / ngày` };
+          }
+          if (feat.text.startsWith('Lưu trữ tối đa')) {
+            return { ...feat, text: `Lưu trữ tối đa ${effectiveDocLimit} tài liệu` };
+          }
+          if (feat.text.startsWith('Dung lượng tối đa')) {
+            return { ...feat, text: `Dung lượng tối đa ${effectiveStorageMb}MB/tài liệu` };
+          }
+          return feat;
         });
 
-        setPackages(merged);
+        return {
+          ...pkg,
+          planId: remoteItem?.id || pkg.id,
+          price: effectivePrice,
+          priceStr: effectivePrice === 0 ? 'Miễn phí' : `${effectivePrice.toLocaleString('vi-VN')}đ`,
+          aiDailyLimit: effectiveAiLimit,
+          documentLimit: effectiveDocLimit,
+          storageMb: effectiveStorageMb,
+          active: effectiveActive,
+          features: dynamicFeatures
+        };
+      });
 
-        setSelectedPkg((current) =>
-          merged.find(
-            (pkg) => pkg.id === current.id
-          ) || merged[1]
-        );
+      setPackages(merged);
 
-      } catch (err) {
-        console.warn(
-          'Không thể tải PricingPlan:',
-          err
-        );
-      }
+      setSelectedPkg((current) => {
+        const updatedCurrent = merged.find((pkg) => pkg.id === current.id);
+        if (updatedCurrent && updatedCurrent.active !== false) return updatedCurrent;
+        return merged.find(p => p.active !== false && p.id !== 'basic') || merged.find(p => p.active !== false) || merged[0];
+      });
     };
 
     loadPricingPlans();
@@ -151,6 +191,11 @@ const PaymentPackage = () => {
   ) => {
     const targetPackage =
       packageToBuy || selectedPkg;
+
+    if (targetPackage?.active === false) {
+      setError(`Gói ${targetPackage.name} hiện đang trong trạng thái tạm ngừng mở bán. Vui lòng chọn gói cước khác.`);
+      return;
+    }
 
     if (user?.subscriptionTier === 'PREMIUM') {
       setError(
@@ -185,9 +230,9 @@ const PaymentPackage = () => {
     }
 
     // Phải có PricingPlan ID
-    if (!targetPackage.planId) {
+    if (!targetPackage.planId || targetPackage.planId === 'pro' || targetPackage.planId === 'premium') {
       setError(
-        'Không tìm thấy PricingPlan. Vui lòng tải lại trang.'
+        `Gói ${targetPackage.name} hiện đang trong trạng thái chưa sẵn sàng khởi tạo liên kết thanh toán. Vui lòng thử lại sau.`
       );
       return;
     }
@@ -202,9 +247,6 @@ const PaymentPackage = () => {
       const cancelUrl =
         `${window.location.origin}/dashboard/payment/cancel`;
 
-      // QUAN TRỌNG:
-      // Không gửi price nữa.
-      // Backend tự lấy price từ PricingPlan.
       const response =
         await paymentService.createPaymentByPlan(
           targetPackage.planId,
@@ -217,18 +259,22 @@ const PaymentPackage = () => {
           response.checkoutUrl;
       } else {
         setError(
-          'Không thể tạo link thanh toán, vui lòng thử lại sau.'
+          `Gói ${targetPackage.name} đang trong quá trình bảo trì cổng thanh toán, vui lòng thử lại sau.`
         );
         setIsProcessing(false);
       }
 
     } catch (err) {
       console.error(err);
+      const rawMsg = err.response?.data?.message;
 
-      setError(
-        err.response?.data?.message ||
-        'Đã xảy ra lỗi khi kết nối tới cổng thanh toán.'
-      );
+      if (rawMsg === 'Dữ liệu đầu vào không hợp lệ') {
+        setError(`Gói ${targetPackage.name} hiện đang trong trạng thái cập nhật cấu hình hệ thống. Vui lòng thử lại sau ít phút.`);
+      } else {
+        setError(
+          rawMsg || 'Đã xảy ra lỗi khi kết nối tới cổng thanh toán.'
+        );
+      }
 
       setIsProcessing(false);
     }
@@ -266,42 +312,56 @@ const PaymentPackage = () => {
         </div>
       )}
 
-      {error && <div className="alert alert-danger" style={{ maxWidth: '800px', margin: '0 auto 2rem' }}>{error}</div>}
+      {error && (
+        <div className="alert alert-danger" style={{ maxWidth: '800px', margin: '0 auto 2rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <AlertTriangle size={20} color="#dc2626" style={{ flexShrink: 0 }} />
+          <div>{error}</div>
+        </div>
+      )}
 
       <div className="packages-grid">
 
         {packages.map((pkg) => {
           const isSelected = selectedPkg.id === pkg.id;
+          const isInactive = pkg.active === false;
 
-          let isDisabled = isProcessing || pkg.id === 'basic';
-          let btnText = pkg.buttonText;
+          let isDisabled = isProcessing || pkg.id === 'basic' || isInactive;
+          let btnText = isInactive ? 'Tạm ngừng mở bán' : pkg.buttonText;
 
-          if (user?.subscriptionTier === 'PREMIUM') {
-            isDisabled = true;
-            btnText = pkg.id === 'premium' ? 'Đang sử dụng' : 'Không khả dụng';
-          } else if (user?.subscriptionTier === 'PRO') {
-            if (pkg.id === 'pro') {
+          if (!isInactive) {
+            if (user?.subscriptionTier === 'PREMIUM') {
               isDisabled = true;
-              btnText = 'Đang sử dụng';
-            } else if (pkg.id === 'basic') {
-              isDisabled = true;
-              btnText = 'Không khả dụng';
-            }
-          } else {
-            if (pkg.id === 'basic') {
-              isDisabled = true;
-              btnText = 'Đang sử dụng';
+              btnText = pkg.id === 'premium' ? 'Đang sử dụng' : 'Không khả dụng';
+            } else if (user?.subscriptionTier === 'PRO') {
+              if (pkg.id === 'pro') {
+                isDisabled = true;
+                btnText = 'Đang sử dụng';
+              } else if (pkg.id === 'basic') {
+                isDisabled = true;
+                btnText = 'Không khả dụng';
+              }
+            } else {
+              if (pkg.id === 'basic') {
+                isDisabled = true;
+                btnText = 'Đang sử dụng';
+              }
             }
           }
 
           return (
             <div
               key={pkg.id}
-              className={`package-card glass-card ${isSelected ? 'selected' : ''} ${pkg.isPopular ? 'popular' : ''}`}
-              onClick={() => setSelectedPkg(pkg)}
-              style={{ '--pkg-color': pkg.color }}
+              className={`package-card glass-card ${isSelected ? 'selected' : ''} ${pkg.isPopular && !isInactive ? 'popular' : ''} ${isInactive ? 'inactive-package' : ''}`}
+              onClick={() => !isInactive && setSelectedPkg(pkg)}
+              style={{
+                '--pkg-color': pkg.color
+              }}
             >
-              {pkg.isPopular && <div className="popular-badge">Phổ biến nhất</div>}
+              {isInactive ? (
+                <div className="popular-badge" style={{ backgroundColor: 'var(--neutral-500)' }}>Tạm ngừng bán</div>
+              ) : (
+                pkg.isPopular && <div className="popular-badge">Phổ biến nhất</div>
+              )}
 
               <div className="package-header">
                 <div className="icon-wrapper" style={{ color: pkg.color, backgroundColor: `${pkg.color}15` }}>
@@ -356,24 +416,28 @@ const PaymentPackage = () => {
         <p className="text-neutral-500 mb-4">Tổng thanh toán: <strong style={{ color: 'var(--primary-600)', fontSize: '1.25rem' }}>{selectedPkg.priceStr}</strong></p>
 
         {(() => {
-          let isDisabled = isProcessing || selectedPkg.id === 'basic';
-          let btnText = selectedPkg.price === 0 ? 'Gói mặc định của bạn' : (isProcessing ? 'Đang chuyển hướng...' : 'Thanh toán qua VietQR');
+          let isDisabled = isProcessing || selectedPkg.id === 'basic' || selectedPkg.active === false;
+          let btnText = selectedPkg.active === false
+            ? 'Gói này hiện đang tạm ngừng mở bán'
+            : (selectedPkg.price === 0 ? 'Gói mặc định của bạn' : (isProcessing ? 'Đang chuyển hướng...' : 'Thanh toán qua VietQR'));
 
-          if (user?.subscriptionTier === 'PREMIUM') {
-            isDisabled = true;
-            btnText = selectedPkg.id === 'premium' ? 'Bạn đang sử dụng gói này' : 'Không khả dụng (Bạn đã có gói cao hơn)';
-          } else if (user?.subscriptionTier === 'PRO') {
-            if (selectedPkg.id === 'pro') {
+          if (selectedPkg.active !== false) {
+            if (user?.subscriptionTier === 'PREMIUM') {
               isDisabled = true;
-              btnText = 'Bạn đang sử dụng gói này';
-            } else if (selectedPkg.id === 'basic') {
-              isDisabled = true;
-              btnText = 'Không khả dụng (Bạn đã có gói cao hơn)';
-            }
-          } else {
-            if (selectedPkg.id === 'basic') {
-              isDisabled = true;
-              btnText = 'Bạn đang sử dụng gói này';
+              btnText = selectedPkg.id === 'premium' ? 'Bạn đang sử dụng gói này' : 'Không khả dụng (Bạn đã có gói cao hơn)';
+            } else if (user?.subscriptionTier === 'PRO') {
+              if (selectedPkg.id === 'pro') {
+                isDisabled = true;
+                btnText = 'Bạn đang sử dụng gói này';
+              } else if (selectedPkg.id === 'basic') {
+                isDisabled = true;
+                btnText = 'Không khả dụng (Bạn đã có gói cao hơn)';
+              }
+            } else {
+              if (selectedPkg.id === 'basic') {
+                isDisabled = true;
+                btnText = 'Bạn đang sử dụng gói này';
+              }
             }
           }
 

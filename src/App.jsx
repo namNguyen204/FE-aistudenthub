@@ -13,11 +13,12 @@ import {
   AdminUserList,
   AdminChatModeration,
   AdminSystemConfig,
+  AdminReportList,
+  AdminSubscriptionPlans,
   PaymentPackage,
   PaymentSuccess,
   PaymentCancel,
   PaymentHistory,
-  AdminReportList,
   SharedWithMe
 } from './pages/dashboard/DashboardPages';
 import UploadDocument from './pages/dashboard/documents/UploadDocument';
@@ -91,6 +92,7 @@ function AppRoutes() {
           <Route path="documents" element={<AdminDocumentList />} />
           <Route path="chats" element={<AdminChatModeration />} />
           <Route path="reports" element={<AdminReportList />} />
+          <Route path="subscription-plans" element={<AdminSubscriptionPlans />} />
           <Route path="settings" element={<AdminSystemConfig />} />
         </Route>
       </Routes>
