@@ -95,6 +95,7 @@ const AIChatbot = () => {
 
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
+  const sendingRef = useRef(false);
 
   useEffect(() => {
     loadSessions();
@@ -189,8 +190,9 @@ const AIChatbot = () => {
   };
 
   const handleSendMessage = async () => {
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || isTyping || sendingRef.current) return;
 
+    sendingRef.current = true;
     const textToSend = inputText.trim();
     setInputText('');
     if (textareaRef.current) {
@@ -246,11 +248,12 @@ const AIChatbot = () => {
       }]);
     } finally {
       setIsTyping(false);
+      sendingRef.current = false;
     }
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault();
       handleSendMessage();
     }
