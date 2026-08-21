@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { 
-  BookOpen, 
-  Search, 
-  MessageSquare, 
-  Upload, 
-  FileText, 
+import {
+  BookOpen,
+  Search,
+  MessageSquare,
+  Upload,
+  FileText,
   LogOut,
   Settings,
   Shield,
@@ -26,10 +26,11 @@ import {
 import Button from '../components/Button/Button';
 import './DashboardLayout.css';
 
+//test deploy
 const DashboardLayout = () => {
   const { user, logout } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  
+
   const role = user?.role?.replace('ROLE_', '') || 'USER';
   const isAdmin = role === 'ADMIN' || role === 'MODERATOR';
 
@@ -87,7 +88,7 @@ const DashboardLayout = () => {
           <BookOpen size={28} className="sidebar-logo-icon" />
           <span className="sidebar-logo-text">AI Student Hub</span>
         </div>
-        
+
         <nav className="sidebar-nav">
           {navigation.map((item) => (
             <NavLink
@@ -126,8 +127,8 @@ const DashboardLayout = () => {
       <main className="dashboard-main">
         <header className="dashboard-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <button 
-              className="header-icon-btn" 
+            <button
+              className="header-icon-btn"
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               title="Toggle Menu"
             >
@@ -136,8 +137,8 @@ const DashboardLayout = () => {
           </div>
           <div className="header-actions">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, fontSize: '14px', color: 'var(--neutral-700)' }}>
-               {user?.fullName || user?.email?.split('@')[0] || 'User'}
-               {renderUserBadge(16)}
+              {user?.fullName || user?.email?.split('@')[0] || 'User'}
+              {renderUserBadge(16)}
             </div>
           </div>
         </header>
