@@ -4,7 +4,7 @@ const documentService = {
   upload: async (file, requestData, onUploadProgress) => {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     const requestBlob = new Blob([JSON.stringify(requestData)], { type: 'application/json' });
     formData.append('request', requestBlob);
 
@@ -19,14 +19,14 @@ const documentService = {
 
   search: async (params) => {
     const { keyword, subject, major, folderId, documentType, page = 0, size = 12 } = params || {};
-    
+
     const response = await api.get('/documents/my');
     let allDocs = response.data?.data || [];
-    
+
     if (keyword) {
       const kw = keyword.toLowerCase();
-      allDocs = allDocs.filter(d => 
-        (d.title?.toLowerCase().includes(kw)) || 
+      allDocs = allDocs.filter(d =>
+        (d.title?.toLowerCase().includes(kw)) ||
         (d.description?.toLowerCase().includes(kw))
       );
     }
@@ -44,12 +44,12 @@ const documentService = {
     if (documentType) {
       allDocs = allDocs.filter(d => d.documentType === documentType);
     }
-    
+
     const totalElements = allDocs.length;
     const totalPages = Math.ceil(totalElements / size);
     const start = page * size;
     const pagedDocs = allDocs.slice(start, start + size);
-    
+
     return {
       content: pagedDocs,
       totalElements,

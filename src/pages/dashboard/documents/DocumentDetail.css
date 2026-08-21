@@ -1,6 +1,6 @@
 .document-detail-container {
   display: flex;
-  height: calc(100vh - 120px); /* Adjust based on navbar/padding */
+  height: calc(100vh - 136px); /* header 72px + padding top 32px + padding bottom 32px */
   gap: var(--spacing-6);
   animation: slideUpFade 0.5s ease-out forwards;
 }
@@ -14,6 +14,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
   box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
 }
 
@@ -45,9 +46,11 @@
   flex: 1;
   position: relative;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: stretch;
   background-color: var(--neutral-800);
+  overflow: hidden;
+  min-height: 0;
 }
 
 .pdf-iframe {

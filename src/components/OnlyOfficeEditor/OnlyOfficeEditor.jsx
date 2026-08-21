@@ -112,7 +112,7 @@ const OnlyOfficeEditor = ({ documentId }) => {
   }
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', minHeight: '700px' }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%', flex: 1, minHeight: 0 }}>
       {loading && (
         <div style={{
           position: 'absolute',
@@ -123,7 +123,7 @@ const OnlyOfficeEditor = ({ documentId }) => {
           Đang kết nối tới trình soạn thảo OnlyOffice VPS...
         </div>
       )}
-      <div id={containerId} style={{ width: '100%', height: '100%', minHeight: '700px' }} />
+      <div id={containerId} style={{ width: '100%', height: '100%' }} />
     </div>
   );
 };

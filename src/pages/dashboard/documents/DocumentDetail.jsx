@@ -25,30 +25,30 @@ const formatFileSize = (bytes) => {
 const DocumentDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   const [doc, setDoc] = useState(null);
   const [previewData, setPreviewData] = useState(null);
   const [fileUrl, setFileUrl] = useState(null);
   const [loading, setLoading] = useState(true);
   const [streamLoading, setStreamLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  
+
   // OnlyOffice state
   const [isOnlyOfficeOpen, setIsOnlyOfficeOpen] = useState(false);
   const [onlyOfficeConfig, setOnlyOfficeConfig] = useState(null);
   const [isConfigLoading, setIsConfigLoading] = useState(false);
-  
+
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  
+
   const [versions, setVersions] = useState([]);
   const [versionsLoading, setVersionsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  
+
   const [folders, setFolders] = useState([]);
   const [formData, setFormData] = useState({
     title: '',
@@ -65,7 +65,7 @@ const DocumentDetail = () => {
     fetchDocumentData();
     fetchVersionsData();
     loadFolders();
-    
+
     return () => {
       if (fileUrl) URL.revokeObjectURL(fileUrl);
     };
@@ -129,7 +129,7 @@ const DocumentDetail = () => {
       } else {
         setStreamLoading(false);
       }
-      
+
       setLoading(false);
     } catch (err) {
       setError('Failed to load document details');
@@ -224,7 +224,7 @@ const DocumentDetail = () => {
           <h2 className="preview-title" title={doc.fileName}>{doc.fileName}</h2>
 
         </div>
-        
+
         <div className="preview-content">
           {streamLoading ? (
             <div style={{ color: 'white' }}>Đang tải bản xem trước...</div>
@@ -259,7 +259,7 @@ const DocumentDetail = () => {
           <h1 className="metadata-title">{doc.title}</h1>
           <p className="metadata-description">{doc.description || 'Không có mô tả.'}</p>
         </div>
-        
+
         <div className="metadata-body">
           <div className="meta-item">
             <span className="meta-label">Môn học & Chuyên ngành</span>
@@ -268,34 +268,34 @@ const DocumentDetail = () => {
               {doc.major && <span className="meta-badge" style={{ backgroundColor: 'var(--neutral-100)', color: 'var(--neutral-700)' }}>{doc.major}</span>}
             </div>
           </div>
-          
+
           <div className="meta-item">
             <span className="meta-label">Loại tài liệu</span>
-            <span className="meta-value"><FileText size={16} color="var(--primary-500)"/> {doc.documentType}</span>
+            <span className="meta-value"><FileText size={16} color="var(--primary-500)" /> {doc.documentType}</span>
           </div>
 
           {doc.folderId && (
             <div className="meta-item">
               <span className="meta-label">Thư mục</span>
-              <span className="meta-value"><Folder size={16} color="#f59e0b"/> Đã lưu trong Thư mục</span>
+              <span className="meta-value"><Folder size={16} color="#f59e0b" /> Đã lưu trong Thư mục</span>
             </div>
           )}
 
           <div className="meta-item">
             <span className="meta-label">Kích thước tệp</span>
-            <span className="meta-value"><HardDrive size={16} color="var(--neutral-500)"/> {formatFileSize(doc.fileSize)}</span>
+            <span className="meta-value"><HardDrive size={16} color="var(--neutral-500)" /> {formatFileSize(doc.fileSize)}</span>
           </div>
 
           <div className="meta-item">
             <span className="meta-label">Ngày tải lên</span>
-            <span className="meta-value"><Calendar size={16} color="var(--neutral-500)"/> {new Date(doc.createdAt).toLocaleString()}</span>
+            <span className="meta-value"><Calendar size={16} color="var(--neutral-500)" /> {new Date(doc.createdAt).toLocaleString()}</span>
           </div>
-          
+
           <div className="meta-item">
             <span className="meta-label">Phiên bản</span>
             <span className="meta-value" style={{ fontWeight: 600, color: 'var(--primary-600)' }}>v{doc.version || '1.0'}</span>
           </div>
-          
+
           <div className="meta-item">
             <span className="meta-label">Quyền riêng tư</span>
             <span className="meta-value">{doc.visibility === 'PUBLIC' ? 'Công khai (Đã chia sẻ)' : 'Riêng tư (Chỉ mình bạn)'}</span>
@@ -321,7 +321,7 @@ const DocumentDetail = () => {
           <Button variant="outline" style={{ width: '100%', borderColor: 'var(--error-200)', color: 'var(--error-600)', marginTop: '8px' }} onClick={() => setIsDeleteModalOpen(true)} isLoading={isDeleting}>
             <Trash2 size={16} style={{ marginRight: '6px' }} /> Xóa Tài liệu
           </Button>
-          
+
           {doc.visibility === 'PUBLIC' && (
             <div style={{ marginTop: '16px', borderTop: '1px solid var(--neutral-200)', paddingTop: '16px' }}>
               <Button variant="outline" style={{ width: '100%', borderColor: 'transparent', color: 'var(--neutral-500)', fontSize: '13px' }} onClick={() => setIsReportModalOpen(true)}>
@@ -337,7 +337,7 @@ const DocumentDetail = () => {
             <h3 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--neutral-800)', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
               <History size={16} color="var(--primary-600)" /> Lịch sử Phiên bản
             </h3>
-            <button 
+            <button
               onClick={refreshVersions}
               disabled={refreshing}
               style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', color: 'var(--neutral-500)' }}
@@ -386,22 +386,22 @@ const DocumentDetail = () => {
         </div>
       </div>
 
-      <ShareDocumentModal 
+      <ShareDocumentModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
         documentTitle={doc.title}
         documentId={doc.id}
       />
 
-      <ReportDocumentModal 
+      <ReportDocumentModal
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}
         documentTitle={doc.title}
         documentId={doc.id}
       />
 
-      <Modal 
-        isOpen={isEditModalOpen} 
+      <Modal
+        isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         title="Chỉnh sửa Thông tin Tài liệu"
         footer={
@@ -412,37 +412,37 @@ const DocumentDetail = () => {
         }
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <Input 
-            label="Tiêu đề *" 
-            value={formData.title} 
+          <Input
+            label="Tiêu đề *"
+            value={formData.title}
             onChange={(e) => {
               setFormData({ ...formData, title: e.target.value });
               if (formErrors.title) setFormErrors({ ...formErrors, title: null });
             }}
             error={formErrors.title}
           />
-          <Input 
-            label="Mô tả" 
-            value={formData.description} 
+          <Input
+            label="Mô tả"
+            value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           />
           <div className="edit-form-grid">
-            <Input 
-              label="Môn học" 
-              value={formData.subject} 
+            <Input
+              label="Môn học"
+              value={formData.subject}
               onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
             />
-            <Input 
-              label="Chuyên ngành" 
-              value={formData.major} 
+            <Input
+              label="Chuyên ngành"
+              value={formData.major}
               onChange={(e) => setFormData({ ...formData, major: e.target.value })}
             />
           </div>
-          
+
           <div className="edit-form-grid">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--neutral-700)' }}>Thư mục</label>
-              <select 
+              <select
                 style={{ padding: '10px 14px', border: '1px solid var(--neutral-300)', borderRadius: 'var(--radius-md)' }}
                 value={formData.folderId}
                 onChange={(e) => setFormData({ ...formData, folderId: e.target.value })}
@@ -453,7 +453,7 @@ const DocumentDetail = () => {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--neutral-700)' }}>Quyền riêng tư</label>
-              <select 
+              <select
                 style={{ padding: '10px 14px', border: '1px solid var(--neutral-300)', borderRadius: 'var(--radius-md)' }}
                 value={formData.visibility}
                 onChange={(e) => setFormData({ ...formData, visibility: e.target.value })}
@@ -467,18 +467,18 @@ const DocumentDetail = () => {
       </Modal>
 
       {isOnlyOfficeOpen && onlyOfficeConfig && (
-        <OnlyOfficeEditor 
-          configData={onlyOfficeConfig} 
+        <OnlyOfficeEditor
+          configData={onlyOfficeConfig}
           onClose={() => {
             setIsOnlyOfficeOpen(false);
             fetchFileStream();
-          }} 
+          }}
         />
       )}
 
       {/* Delete Confirmation Modal */}
-      <ConfirmDeleteModal 
-        isOpen={isDeleteModalOpen} 
+      <ConfirmDeleteModal
+        isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDelete}
         isDeleting={isDeleting}
