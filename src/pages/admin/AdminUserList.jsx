@@ -329,7 +329,7 @@ const AdminUserList = () => {
                 <p style={{ margin: '0 0 0.25rem 0', fontSize: '12px', color: 'var(--neutral-500)', fontWeight: 500 }}>GÓI ĐĂNG KÝ</p>
                 <p style={{ margin: 0 }}>
                   {(() => {
-                    const plan = getPlanStyle(viewUserDetails.planName, viewUserDetails.premium);
+                    const plan = getPlanStyle(viewUserDetails.subscriptionTier, viewUserDetails.isPremium);
                     return (
                       <span style={{ padding: '0.25rem 0.5rem', borderRadius: '4px', fontSize: '13px', fontWeight: 600, backgroundColor: plan.backgroundColor, color: plan.color }}>
                         {plan.label}
@@ -340,11 +340,11 @@ const AdminUserList = () => {
               </div>
 
               {/* Hiển thị ngày hết hạn và số ngày còn lại nếu là premium */}
-              {viewUserDetails.premium && viewUserDetails.planExpiredAt && (
+              {viewUserDetails.isPremium && viewUserDetails.premiumExpiredAt && (
                 <div>
                   <p style={{ margin: '0 0 0.25rem 0', fontSize: '12px', color: 'var(--neutral-500)', fontWeight: 500 }}>HẾT HẠN</p>
                   <p style={{ margin: 0, color: 'var(--neutral-800)', fontWeight: 500 }}>
-                    {new Date(viewUserDetails.planExpiredAt).toLocaleDateString('vi-VN')}
+                    {new Date(viewUserDetails.premiumExpiredAt).toLocaleDateString('vi-VN')}
                     {viewUserDetails.daysRemaining > 0 && (
                       <span style={{ marginLeft: '0.5rem', fontSize: '12px', color: 'var(--success-600)', fontWeight: 600 }}>
                         (còn {viewUserDetails.daysRemaining} ngày)
