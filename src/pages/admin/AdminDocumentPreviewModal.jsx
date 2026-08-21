@@ -109,7 +109,7 @@ const AdminDocumentPreviewModal = ({ isOpen, onClose, document, onDelete, onDmca
                 [Admin Preview] {document.title}
               </h3>
               <p style={{ margin: '2px 0 0 0', fontSize: '13px', color: 'var(--neutral-500)' }}>
-               Người đăng: <strong>{document.uploaderFullName || document.ownerName || document.authorName || document.uploaderEmail || 'Người dùng vô danh'}</strong> |
+                Người đăng: <strong>{document.uploaderFullName || document.ownerName || document.authorName || document.uploaderEmail || 'Người dùng vô danh'}</strong> |
                 {document.reviewerName && <span> Kiểm duyệt bởi: <strong>{document.reviewerName}</strong> | </span>}
                 Chế độ: <strong style={{ color: document.visibility === 'PUBLIC' ? 'var(--success-600)' : 'var(--neutral-600)' }}>{document.visibility || 'PUBLIC'}</strong>
                 {document.dmcaVerified && (
@@ -141,6 +141,17 @@ const AdminDocumentPreviewModal = ({ isOpen, onClose, document, onDelete, onDmca
           minHeight: 0,
           width: '100%'
         }}>
+          {(document.rejectionReason || document.approvalStatus === 'DMCA_TAKEN_DOWN' || document.approvalStatus === 'REJECTED') && (
+            <div style={{ width: '100%', marginBottom: '1rem', padding: '1rem', backgroundColor: 'var(--error-50)', border: '1px solid var(--error-200)', borderRadius: '8px', color: 'var(--error-700)' }}>
+              <strong style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '15px', marginBottom: '4px' }}>
+                <AlertTriangle size={18} /> Lý do gỡ bỏ:
+              </strong>
+              <p style={{ margin: 0, fontSize: '14px', color: 'var(--error-600)', lineHeight: 1.5 }}>
+                {document.rejectionReason || 'Tài liệu bị gỡ tự động vì phát hiện vi phạm bản quyền hoặc dữ liệu nhạy cảm.'}
+              </p>
+            </div>
+          )}
+
           {document.reports && document.reports.length > 0 && (
             <div style={{ width: '100%', marginBottom: '1rem', padding: '1rem', backgroundColor: 'var(--error-50)', border: '1px solid var(--error-200)', borderRadius: '8px' }}>
               <h4 style={{ color: 'var(--error-700)', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -199,17 +210,17 @@ const AdminDocumentPreviewModal = ({ isOpen, onClose, document, onDelete, onDmca
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
             <Button variant="outline" onClick={onClose}>Đóng</Button>
             {document.visibility === 'PUBLIC' && document.approvalStatus !== 'DMCA_TAKEN_DOWN' && onDmcaTakedown && (
-              <Button 
-                variant="primary" 
-                style={{ backgroundColor: 'var(--error-700)', color: 'white' }} 
+              <Button
+                variant="primary"
+                style={{ backgroundColor: 'var(--error-700)', color: 'white' }}
                 onClick={() => { onClose(); onDmcaTakedown(document.id); }}
               >
                 <AlertTriangle size={16} style={{ marginRight: '6px' }} /> Gỡ bỏ khẩn cấp (DMCA)
               </Button>
             )}
             {onDelete && <Button
-              variant="primary" 
-              style={{ backgroundColor: 'var(--error-600)', color: 'white' }} 
+              variant="primary"
+              style={{ backgroundColor: 'var(--error-600)', color: 'white' }}
               onClick={() => { onClose(); onDelete(document.id); }}
             >
               <Trash2 size={16} style={{ marginRight: '6px' }} /> Xóa tài liệu vi phạm
