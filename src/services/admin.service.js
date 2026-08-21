@@ -31,8 +31,40 @@ const adminService = {
   },
 
   getDocumentTypeStats: async () => {
-    const response = await api.get('/admin/dashboard/document-types');
-    return response.data?.data;
+    try {
+      const response = await api.get('/admin/dashboard/document-types');
+      if (response.data?.data && Array.isArray(response.data.data) && response.data.data.length > 0) {
+        return response.data.data;
+      }
+    } catch (e) {
+      console.warn('Primary document-types API failed, trying fallback:', e);
+    }
+    try {
+      const response = await api.get('/admin/documents?page=0&size=500');
+      const docs = response.data?.data?.content || response.data?.data || [];
+      const counts = {};
+      docs.forEach(doc => {
+        const fn = (doc.fileName || doc.title || '').toLowerCase();
+        let type = 'Khác';
+        if (fn.endsWith('.pdf')) type = 'PDF';
+        else if (fn.endsWith('.doc') || fn.endsWith('.docx')) type = 'Word';
+        else if (fn.endsWith('.ppt') || fn.endsWith('.pptx')) type = 'PowerPoint';
+        else if (fn.endsWith('.png') || fn.endsWith('.jpg') || fn.endsWith('.jpeg') || fn.endsWith('.webp')) type = 'Hình ảnh';
+        else if (fn.endsWith('.txt')) type = 'Văn bản';
+        else {
+          const raw = String(doc.fileType || doc.documentType || doc.type || '').toLowerCase();
+          if (raw.includes('pdf')) type = 'PDF';
+          else if (raw.includes('doc') || raw.includes('word')) type = 'Word';
+          else if (raw.includes('ppt') || raw.includes('presentation')) type = 'PowerPoint';
+          else if (raw.includes('image') || raw.includes('img') || raw.includes('png') || raw.includes('jpg')) type = 'Hình ảnh';
+          else if (raw.includes('text') || raw.includes('txt')) type = 'Văn bản';
+        }
+        counts[type] = (counts[type] || 0) + 1;
+      });
+      return Object.keys(counts).map(type => ({ type, count: counts[type] }));
+    } catch {
+      return [];
+    }
   },
 
   getUploadTrend: async (days = 30) => {

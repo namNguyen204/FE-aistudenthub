@@ -13,7 +13,6 @@ const AdminDashboardHome = () => {
   const [stats, setStats] = useState(null);
   const [businessStats, setBusinessStats] = useState(null);
   const [aiUsage, setAiUsage] = useState(null);
-  const [typeStats, setTypeStats] = useState([]);
   const [uploadTrend, setUploadTrend] = useState([]);
   const [revenueTrend, setRevenueTrend] = useState([]);
 
@@ -27,18 +26,16 @@ const AdminDashboardHome = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [statsData, businessData, aiData, typeData, trendData, revenueData] = await Promise.all([
+        const [statsData, businessData, aiData, trendData, revenueData] = await Promise.all([
           adminService.getDashboardStats(),
           adminService.getBusinessStats(),
           adminService.getAiUsage(),
-          adminService.getDocumentTypeStats(),
           adminService.getUploadTrend(daysFilter),
           adminService.getRevenueTrend(daysFilter)
         ]);
         setStats(statsData);
         setBusinessStats(businessData);
         setAiUsage(aiData);
-        setTypeStats(typeData || []);
 
         // Ensure trendData is in the correct format for recharts
         // Assuming backend returns [{ date: '2023-10-01', count: 5 }, ...]
@@ -70,21 +67,6 @@ const AdminDashboardHome = () => {
     PREMIUM: 'Gói Chuyên gia',
     BASIC: 'Gói Cơ bản'
   }[popularPackageKey] || businessStats?.mostPopularPackage || 'Chưa có giao dịch';
-  const normalizedTypeStats = Object.values(
-    typeStats.reduce((acc, item) => {
-      const rawType = String(item.fileType || item.type || 'Khác').toLowerCase();
-      let name = 'Khác';
-      if (rawType.includes('pdf')) name = 'PDF';
-      else if (rawType.includes('word') || rawType.includes('document')) name = 'Word';
-      else if (rawType.includes('presentation') || rawType.includes('powerpoint')) name = 'PowerPoint';
-      else if (rawType.includes('image')) name = 'Hình ảnh';
-      else if (rawType.includes('text')) name = 'Văn bản';
-      const value = Number(item.count ?? item.value ?? 0);
-      acc[name] = { name, value: (acc[name]?.value ?? 0) + value };
-      return acc;
-    }, {})
-  );
-  const documentedTotal = normalizedTypeStats.reduce((sum, item) => sum + item.value, 0);
 
   return (
     <div className="premium-page-wrapper">
@@ -210,68 +192,23 @@ const AdminDashboardHome = () => {
         </button>
       </div>
 
-      <div className="dashboard-content-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
-        <div className="dashboard-section glass-card">
-          <div className="dashboard-section-header">
-            <h3 className="dashboard-section-title">Xu hướng Doanh thu ({daysFilter} ngày)</h3>
-          </div>
-          <div className="dashboard-section-body" style={{ padding: '2rem', height: '300px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={revenueTrend} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--neutral-200)" />
-                <XAxis dataKey="date" tickFormatter={(val) => new Date(val).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} tick={{ fontSize: 12, fill: 'var(--neutral-500)' }} axisLine={false} tickLine={false} />
-                <YAxis tickFormatter={(value) => `${value / 1000000}M`} tick={{ fontSize: 12, fill: 'var(--neutral-500)' }} axisLine={false} tickLine={false} width={40} />
-                <Tooltip
-                  formatter={(value) => [`${value.toLocaleString()} đ`, 'Doanh thu']}
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                />
-                <Line type="monotone" dataKey="revenue" stroke="var(--success-500)" strokeWidth={3} activeDot={{ r: 8 }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+      <div className="dashboard-section glass-card">
+        <div className="dashboard-section-header">
+          <h3 className="dashboard-section-title">Xu hướng Doanh thu ({daysFilter} ngày)</h3>
         </div>
-
-        <div className="dashboard-section glass-card">
-          <div className="dashboard-section-header">
-            <h3 className="dashboard-section-title">Tài liệu theo loại tệp ({documentedTotal.toLocaleString('vi-VN')} tài liệu)</h3>
-          </div>
-          <div className="dashboard-section-body" style={{ padding: '2rem', height: '300px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={normalizedTypeStats}
-                  cx="50%"
-                  cy="45%"
-                  innerRadius={55}
-                  outerRadius={85}
-                  paddingAngle={4}
-                  dataKey="value"
-                  label={false}
-                >
-                  {normalizedTypeStats.map((entry, index) => {
-                    const colors = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#64748B'];
-                    return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
-                  })}
-                </Pie>
-                <Tooltip 
-                  formatter={(value) => [
-                    `${value.toLocaleString('vi-VN')} tài liệu (${((value / (documentedTotal || 1)) * 100).toFixed(1)}%)`,
-                    'Số lượng'
-                  ]}
-                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
-                />
-                <Legend 
-                  verticalAlign="bottom"
-                  height={36}
-                  formatter={(value) => {
-                    const item = normalizedTypeStats.find((entry) => entry.name === value);
-                    const pct = documentedTotal ? ((item?.value / documentedTotal) * 100).toFixed(0) : 0;
-                    return `${value}: ${item?.value?.toLocaleString('vi-VN') || 0} (${pct}%)`;
-                  }} 
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
+        <div className="dashboard-section-body" style={{ padding: '2rem', height: '300px' }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={revenueTrend} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--neutral-200)" />
+              <XAxis dataKey="date" tickFormatter={(val) => new Date(val).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })} tick={{ fontSize: 12, fill: 'var(--neutral-500)' }} axisLine={false} tickLine={false} />
+              <YAxis tickFormatter={(value) => `${value / 1000000}M`} tick={{ fontSize: 12, fill: 'var(--neutral-500)' }} axisLine={false} tickLine={false} width={40} />
+              <Tooltip
+                formatter={(value) => [`${value.toLocaleString()} đ`, 'Doanh thu']}
+                contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+              />
+              <Line type="monotone" dataKey="revenue" stroke="var(--success-500)" strokeWidth={3} activeDot={{ r: 8 }} />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
       </div>
 
