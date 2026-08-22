@@ -26,24 +26,33 @@ import Welcome from './pages/Welcome';
 
 const CommunityDocuments = React.lazy(() => import('./pages/dashboard/DashboardPages').then(module => ({ default: module.CommunityDocuments })));
 const AdminDocumentList = React.lazy(() => import('./pages/dashboard/DashboardPages').then(module => ({ default: module.AdminDocumentList })));
+const ModeratorDocumentList = React.lazy(() => import('./pages/dashboard/DashboardPages').then(module => ({ default: module.ModeratorDocumentList })));
+const ModeratorDashboardHome = React.lazy(() => import('./pages/admin/ModeratorDashboardHome'));
 
 const DocumentSearch = React.lazy(() => import('./pages/dashboard/documents/DocumentSearch'));
 const DocumentDetail = React.lazy(() => import('./pages/dashboard/documents/DocumentDetail'));
 const AIChatbot = React.lazy(() => import('./pages/dashboard/chat/AIChatbot'));
 
-const ProtectedRoute = ({ children, requireAdmin = false }) => {
+const ProtectedRoute = ({ children, requireAdmin = false, allowedRoles = null }) => {
   const { isAuthenticated, loading, user } = useAuth();
   
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--neutral-500)' }}>Đang tải...</div>;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   
   const role = user?.role?.replace('ROLE_', '') || 'USER';
+  
+  if (allowedRoles && !allowedRoles.includes(role)) {
+    if (role === 'ADMIN') return <Navigate to="/admin" replace />;
+    if (role === 'MODERATOR') return <Navigate to="/moderator" replace />;
+    return <Navigate to="/dashboard" replace />;
+  }
+
   if (requireAdmin && role !== 'ADMIN' && role !== 'MODERATOR') {
     return <Navigate to="/dashboard" replace />;
   }
   
   if (!requireAdmin && (role === 'ADMIN' || role === 'MODERATOR')) {
-    return <Navigate to="/admin" replace />;
+    return <Navigate to={role === 'MODERATOR' ? '/moderator' : '/admin'} replace />;
   }
   
   return children;
@@ -52,7 +61,6 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
 function AppRoutes() {
   const { isAuthenticated, user } = useAuth();
   const role = user?.role?.replace('ROLE_', '') || 'USER';
-  const isAdminOrMod = role === 'ADMIN' || role === 'MODERATOR';
 
   return (
     <Suspense fallback={<div style={{ padding: '4rem', textAlign: 'center', color: 'var(--neutral-500)' }}>Đang tải...</div>}>
@@ -83,9 +91,10 @@ function AppRoutes() {
           <Route path="payment/history" element={<PaymentHistory />} />
         </Route>
 
+        {/* Admin Routes */}
         <Route 
           path="/admin" 
-          element={<ProtectedRoute requireAdmin={true}><DashboardLayout /></ProtectedRoute>}
+          element={<ProtectedRoute requireAdmin={true} allowedRoles={['ADMIN']}><DashboardLayout /></ProtectedRoute>}
         >
           <Route index element={<AdminDashboardHome />} />
           <Route path="users" element={<AdminUserList />} />
@@ -94,6 +103,16 @@ function AppRoutes() {
           <Route path="reports" element={<AdminReportList />} />
           <Route path="subscription-plans" element={<AdminSubscriptionPlans />} />
           <Route path="settings" element={<AdminSystemConfig />} />
+        </Route>
+
+        {/* Moderator Routes */}
+        <Route 
+          path="/moderator" 
+          element={<ProtectedRoute requireAdmin={true} allowedRoles={['MODERATOR', 'ADMIN']}><DashboardLayout /></ProtectedRoute>}
+        >
+          <Route index element={<ModeratorDashboardHome />} />
+          <Route path="documents" element={<ModeratorDocumentList />} />
+          <Route path="reports" element={<AdminReportList />} />
         </Route>
       </Routes>
     </Suspense>

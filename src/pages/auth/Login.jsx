@@ -66,9 +66,13 @@ const Login = () => {
       const token = response?.data?.token || localStorage.getItem('access_token');
       if (token) {
         const decoded = jwtDecode(token);
-        const role = decoded.role || decoded.authorities?.[0] || 'USER';
-        if (role === 'ADMIN' || role === 'ROLE_ADMIN') {
+        const role = (decoded.role || decoded.authorities?.[0] || 'USER').replace('ROLE_', '');
+        if (role === 'ADMIN') {
           navigate('/admin');
+          return;
+        }
+        if (role === 'MODERATOR') {
+          navigate('/moderator');
           return;
         }
       }

@@ -29,6 +29,7 @@ const PageWrapper = ({ title, description }) => (
 import AdminDashboardHome from '../admin/AdminDashboardHome';
 import AdminUserList from '../admin/AdminUserList';
 import AdminDocumentList from '../admin/AdminDocumentList';
+import ModeratorDocumentList from '../admin/ModeratorDocumentList';
 import AdminChatModeration from '../admin/AdminChatModeration';
 import AdminSystemConfig from '../admin/AdminSystemConfig';
 import AdminReportList from '../admin/AdminReportList';
@@ -47,6 +48,7 @@ export {
   AdminDashboardHome,
   AdminUserList,
   AdminDocumentList,
+  ModeratorDocumentList,
   AdminChatModeration,
   AdminSystemConfig,
   AdminReportList,

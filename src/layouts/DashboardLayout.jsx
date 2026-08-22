@@ -68,15 +68,16 @@ const DashboardLayout = () => {
   const adminNavigation = [
     { name: 'Dashboard', to: '/admin', icon: <BarChart size={20} /> },
     { name: 'Quản lý Người dùng', to: '/admin/users', icon: <Users size={20} /> },
+    { name: 'Tài liệu Hệ thống', to: '/admin/documents', icon: <FileText size={20} /> },
     { name: 'Quản lý Chat', to: '/admin/chats', icon: <MessageSquare size={20} /> },
     { name: 'Gói dịch vụ', to: '/admin/subscription-plans', icon: <CreditCard size={20} /> },
     { name: 'Cài đặt Hệ thống', to: '/admin/settings', icon: <Shield size={20} /> },
   ];
 
   const moderatorNavigation = [
-    { name: 'Dashboard', to: '/admin', icon: <BarChart size={20} /> },
-    { name: 'Quản lý Tài liệu', to: '/admin/documents', icon: <FileText size={20} /> },
-    { name: 'Báo cáo vi phạm', to: '/admin/reports', icon: <Flag size={20} /> },
+    { name: 'Dashboard', to: '/moderator', icon: <BarChart size={20} /> },
+    { name: 'Quản lý Tài liệu', to: '/moderator/documents', icon: <FileText size={20} /> },
+    { name: 'Báo cáo vi phạm', to: '/moderator/reports', icon: <Flag size={20} /> },
   ];
 
   const navigation = role === 'ADMIN' ? adminNavigation : (role === 'MODERATOR' ? moderatorNavigation : userNavigation);
@@ -94,7 +95,7 @@ const DashboardLayout = () => {
             <NavLink
               key={item.name}
               to={item.to}
-              end={item.to === '/dashboard' || item.to === '/admin'}
+              end={item.to === '/dashboard' || item.to === '/admin' || item.to === '/moderator'}
               className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
             >
               {item.icon}
