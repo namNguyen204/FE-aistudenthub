@@ -286,10 +286,15 @@ const DocumentSearch = () => {
 
   return (
     <div className="premium-page-wrapper document-search-container">
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <h1 className="page-title">Tài liệu của tôi</h1>
-          <p className="page-description">Tìm chính xác những gì bạn cần trên tất cả thư mục và hub.</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+            <h1 className="page-title" style={{ margin: 0 }}>Tài liệu của tôi</h1>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--primary-700)', backgroundColor: 'var(--primary-50)', padding: '4px 10px', borderRadius: '12px', border: '1px solid var(--primary-100)' }}>
+              Đã tải lên: {totalElements}/100
+            </span>
+          </div>
+          <p className="page-description" style={{ margin: 0 }}>Tìm chính xác những gì bạn cần trên tất cả thư mục và hub.</p>
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
           <Button onClick={() => handleOpenFolderModal()} variant="outline" className="flex-center" style={{ gap: '8px' }}>
