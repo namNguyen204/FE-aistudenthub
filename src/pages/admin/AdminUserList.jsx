@@ -318,10 +318,24 @@ const AdminUserList = () => {
 
             {/* Info grid */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div style={{ gridColumn: 'span 2' }}>
+                <p style={{ margin: '0 0 0.25rem 0', fontSize: '12px', color: 'var(--neutral-500)', fontWeight: 500 }}>ID NGƯỜI DÙNG</p>
+                <p style={{ margin: 0, color: 'var(--neutral-800)', fontWeight: 500, fontFamily: 'monospace' }}>
+                  {viewUserDetails.id || 'Không có ID'}
+                </p>
+              </div>
+
               <div>
                 <p style={{ margin: '0 0 0.25rem 0', fontSize: '12px', color: 'var(--neutral-500)', fontWeight: 500 }}>NGÀY THAM GIA</p>
                 <p style={{ margin: 0, color: 'var(--neutral-800)', fontWeight: 500 }}>
                   {viewUserDetails.createdAt ? new Date(viewUserDetails.createdAt).toLocaleDateString('vi-VN') : 'Không rõ'}
+                </p>
+              </div>
+
+              <div>
+                <p style={{ margin: '0 0 0.25rem 0', fontSize: '12px', color: 'var(--neutral-500)', fontWeight: 500 }}>CẬP NHẬT LẦN CUỐI</p>
+                <p style={{ margin: 0, color: 'var(--neutral-800)', fontWeight: 500 }}>
+                  {viewUserDetails.updatedAt ? new Date(viewUserDetails.updatedAt).toLocaleDateString('vi-VN') : 'Chưa cập nhật'}
                 </p>
               </div>
 
@@ -340,11 +354,11 @@ const AdminUserList = () => {
               </div>
 
               {/* Hiển thị ngày hết hạn và số ngày còn lại nếu là premium */}
-              {viewUserDetails.isPremium && viewUserDetails.premiumExpiredAt && (
+              {viewUserDetails.isPremium && (viewUserDetails.premiumExpiredAt || viewUserDetails.premiumExpireAt) && (
                 <div>
                   <p style={{ margin: '0 0 0.25rem 0', fontSize: '12px', color: 'var(--neutral-500)', fontWeight: 500 }}>HẾT HẠN</p>
                   <p style={{ margin: 0, color: 'var(--neutral-800)', fontWeight: 500 }}>
-                    {new Date(viewUserDetails.premiumExpiredAt).toLocaleDateString('vi-VN')}
+                    {new Date(viewUserDetails.premiumExpiredAt || viewUserDetails.premiumExpireAt).toLocaleDateString('vi-VN')}
                     {viewUserDetails.daysRemaining > 0 && (
                       <span style={{ marginLeft: '0.5rem', fontSize: '12px', color: 'var(--success-600)', fontWeight: 600 }}>
                         (còn {viewUserDetails.daysRemaining} ngày)
@@ -354,10 +368,17 @@ const AdminUserList = () => {
                 </div>
               )}
 
-              <div style={{ gridColumn: 'span 2' }}>
+              <div>
                 <p style={{ margin: '0 0 0.25rem 0', fontSize: '12px', color: 'var(--neutral-500)', fontWeight: 500 }}>TRẠNG THÁI TÀI KHOẢN</p>
                 <p style={{ margin: 0, fontWeight: 500, color: viewUserDetails.deletedAt ? 'var(--error-600)' : viewUserDetails.active ? 'var(--success-600)' : 'var(--warning-600)' }}>
                   {viewUserDetails.deletedAt ? 'Đã xóa vĩnh viễn' : viewUserDetails.active ? 'Đang hoạt động' : 'Đang bị khóa'}
+                </p>
+              </div>
+
+              <div>
+                <p style={{ margin: '0 0 0.25rem 0', fontSize: '12px', color: 'var(--neutral-500)', fontWeight: 500 }}>XÁC THỰC EMAIL</p>
+                <p style={{ margin: 0, fontWeight: 500, color: viewUserDetails.emailVerified ? 'var(--success-600)' : 'var(--warning-600)' }}>
+                  {viewUserDetails.emailVerified ? 'Đã xác thực' : 'Chưa xác thực'}
                 </p>
               </div>
             </div>

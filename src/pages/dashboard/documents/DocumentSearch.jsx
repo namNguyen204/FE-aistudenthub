@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import {
-  Search, FileText, Download, Eye, Plus, Folder, Edit2, Trash2, FolderOpen, ChevronRight, FileCode2, FileSpreadsheet, FileIcon, AlertTriangle
+  Search, FileText, Download, Eye, Plus, Folder, Edit2, Trash2, FolderOpen, ChevronRight, FileCode2, FileSpreadsheet, FileIcon, AlertTriangle, HardDrive
 } from 'lucide-react';
 import documentService from '../../../services/document.service';
 import folderService from '../../../services/folder.service';
@@ -11,6 +11,7 @@ import Modal from '../../../components/Modal/Modal';
 import ConfirmDeleteModal from '../../../components/Modal/ConfirmDeleteModal';
 import Toast from '../../../components/Toast/Toast';
 import { validateForm, ruleRequired } from '../../../utils/validation';
+import { useAuth } from '../../../context/AuthContext';
 import './DocumentSearch.css';
 
 const PRESET_COLORS = [
@@ -52,6 +53,7 @@ const DocumentSearch = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { user } = useAuth();
   const [documents, setDocuments] = useState([]);
   const [folders, setFolders] = useState([]);
 
@@ -284,15 +286,31 @@ const DocumentSearch = () => {
 
   const showEmptyState = !isSearching && currentFolders.length === 0 && documents.length === 0;
 
+  let maxDocs = 50;
+  let planName = 'Gói Cơ bản';
+  if (user?.subscriptionTier === 'PREMIUM') {
+    maxDocs = 150;
+    planName = 'Gói Chuyên gia';
+  } else if (user?.subscriptionTier === 'PRO') {
+    maxDocs = 100;
+    planName = 'Gói Nâng cao';
+  }
+
+  const currentDocs = totalElements || 0;
+  const percentUsed = Math.min(Math.round((currentDocs / maxDocs) * 100), 100);
+
   return (
     <div className="premium-page-wrapper document-search-container">
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-            <h1 className="page-title" style={{ margin: 0 }}>Tài liệu của tôi</h1>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--primary-700)', backgroundColor: 'var(--primary-50)', padding: '4px 10px', borderRadius: '12px', border: '1px solid var(--primary-100)' }}>
-              Đã tải lên: {totalElements}/100
-            </span>
+            <h1 className="page-title" style={{ margin: 0, display: 'flex', alignItems: 'center' }}>
+              Tài liệu của tôi
+              <span style={{ marginLeft: '12px', fontSize: '13px', fontWeight: 600, color: 'var(--primary-600)', backgroundColor: '#f0f5ff', padding: '4px 10px', borderRadius: '16px', border: '1px solid #d6e4ff', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <HardDrive size={14} />
+                {currentDocs}/{maxDocs} tài liệu
+              </span>
+            </h1>
           </div>
           <p className="page-description" style={{ margin: 0 }}>Tìm chính xác những gì bạn cần trên tất cả thư mục và hub.</p>
         </div>
@@ -307,6 +325,27 @@ const DocumentSearch = () => {
       </div>
 
       <Toast message={toastMessage} onClose={handleCloseToast} />
+
+      {/* Dung lượng lưu trữ tài liệu block */}
+      <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '1.5rem', marginBottom: '2rem', border: '1px solid var(--neutral-200)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--neutral-700)', fontWeight: 600 }}>
+            <HardDrive size={18} color="var(--primary-600)" />
+            Dung lượng lưu trữ tài liệu
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontWeight: 600, color: 'var(--neutral-900)' }}>{currentDocs}</span>
+            <span style={{ color: 'var(--neutral-500)' }}>/ {maxDocs} tài liệu</span>
+            <span style={{ color: 'var(--neutral-400)', fontSize: '14px' }}>({planName})</span>
+          </div>
+        </div>
+        <div style={{ width: '100%', height: '8px', backgroundColor: 'var(--neutral-100)', borderRadius: '4px', overflow: 'hidden', position: 'relative' }}>
+          <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: `${percentUsed}%`, backgroundColor: 'var(--primary-500)', borderRadius: '4px' }}></div>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+          <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--neutral-600)' }}>{percentUsed}%</span>
+        </div>
+      </div>
 
       <div className="search-header-card">
         <form onSubmit={handleSearchSubmit} className="search-bar-wrapper" style={{ marginBottom: 0 }}>
