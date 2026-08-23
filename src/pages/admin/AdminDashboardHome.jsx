@@ -163,9 +163,23 @@ const AdminDashboardHome = () => {
 
   return (
     <div className="premium-page-wrapper">
-      <div className="page-header">
-        <h1 className="page-title">Dashboard Quản Trị</h1>
-        <p className="page-description">Tổng quan tình hình hoạt động của hệ thống AI Student Hub.</p>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div>
+          <h1 className="page-title">Dashboard Quản Trị</h1>
+          <p className="page-description">Tổng quan tình hình hoạt động của hệ thống AI Student Hub.</p>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', backgroundColor: 'white', padding: '0.5rem 1rem', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid var(--neutral-200)' }}>
+          <Clock size={18} color="var(--neutral-500)" />
+          <select 
+            value={daysFilter} 
+            onChange={(e) => setDaysFilter(Number(e.target.value))}
+            style={{ border: 'none', outline: 'none', backgroundColor: 'transparent', fontWeight: 500, color: 'var(--neutral-700)', cursor: 'pointer', fontSize: '14px' }}
+          >
+            <option value={7}>7 ngày qua</option>
+            <option value={30}>30 ngày qua</option>
+            <option value={90}>90 ngày qua</option>
+          </select>
+        </div>
       </div>
 
       {error && (
@@ -263,27 +277,6 @@ const AdminDashboardHome = () => {
       </div>
 
 
-
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1rem', gap: '8px' }}>
-        <button
-          onClick={() => setDaysFilter(7)}
-          style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--neutral-300)', backgroundColor: daysFilter === 7 ? 'var(--primary-600)' : 'white', color: daysFilter === 7 ? 'white' : 'var(--neutral-700)', cursor: 'pointer', fontWeight: 500 }}
-        >
-          7 ngày
-        </button>
-        <button
-          onClick={() => setDaysFilter(30)}
-          style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--neutral-300)', backgroundColor: daysFilter === 30 ? 'var(--primary-600)' : 'white', color: daysFilter === 30 ? 'white' : 'var(--neutral-700)', cursor: 'pointer', fontWeight: 500 }}
-        >
-          30 ngày
-        </button>
-        <button
-          onClick={() => setDaysFilter(90)}
-          style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid var(--neutral-300)', backgroundColor: daysFilter === 90 ? 'var(--primary-600)' : 'white', color: daysFilter === 90 ? 'white' : 'var(--neutral-700)', cursor: 'pointer', fontWeight: 500 }}
-        >
-          90 ngày
-        </button>
-      </div>
 
       <div className="dashboard-section glass-card">
         <div className="dashboard-section-header">
