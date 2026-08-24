@@ -17,6 +17,7 @@ const AdminDashboardHome = () => {
   const [aiUsage, setAiUsage] = useState(null);
   const [uploadTrend, setUploadTrend] = useState([]);
   const [revenueTrend, setRevenueTrend] = useState([]);
+  const [docTypeStats, setDocTypeStats] = useState([]);
   const [topDocs, setTopDocs] = useState([]);
   const [subjectStats, setSubjectStats] = useState([]);
   const [recentActivities, setRecentActivities] = useState([]);
@@ -31,7 +32,7 @@ const AdminDashboardHome = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [statsData, businessData, aiData, trendData, revenueData, docsData, usersData, reportsData] = await Promise.all([
+        const [statsData, businessData, aiData, trendData, revenueData, docsData, usersData, reportsData, docTypesData] = await Promise.all([
           adminService.getDashboardStats(),
           adminService.getBusinessStats(),
           adminService.getAiUsage(),
@@ -39,13 +40,15 @@ const AdminDashboardHome = () => {
           adminService.getRevenueTrend(daysFilter),
           adminService.getAllDocuments('', 0, 50).catch(() => ({ content: [] })),
           adminService.getUsers('', 0, 50).catch(() => ({ content: [] })),
-          adminService.getReports({ page: 0, size: 50 }).catch(() => ({ content: [] }))
+          adminService.getReports({ page: 0, size: 50 }).catch(() => ({ content: [] })),
+          adminService.getDocumentTypeStats().catch(() => [])
         ]);
         setStats(statsData);
         setBusinessStats(businessData);
         setAiUsage(aiData);
         setUploadTrend(trendData || []);
         setRevenueTrend(revenueData || []);
+        setDocTypeStats(docTypesData || []);
 
         const docs = docsData?.content || docsData?.data || (Array.isArray(docsData) ? docsData : []);
         const usersList = usersData?.content || usersData?.data || (Array.isArray(usersData) ? usersData : []);
@@ -143,6 +146,28 @@ const AdminDashboardHome = () => {
     };
     fetchData();
   }, [daysFilter]);
+
+  const normalizedTypeStats = Object.values(
+    docTypeStats.reduce((acc, item) => {
+      const rawType = String(item.label || item.type || item.fileType || item.name || 'Khác').toLowerCase();
+      let name = 'Khác';
+      if (rawType.includes('pdf')) name = 'PDF';
+      else if (rawType.includes('word') || rawType.includes('doc')) name = 'Word';
+      else if (rawType.includes('powerpoint') || rawType.includes('ppt') || rawType.includes('presentation')) name = 'PowerPoint';
+      else if (rawType.includes('hình ảnh') || rawType.includes('image') || rawType.includes('png') || rawType.includes('jpg') || rawType.includes('jpeg')) name = 'Hình ảnh';
+      else if (rawType.includes('văn bản') || rawType.includes('text') || rawType.includes('txt')) name = 'Văn bản';
+      else {
+        const itemType = String(item.label || item.type || item.fileType || item.name || '');
+        if (['PDF', 'Word', 'PowerPoint', 'Hình ảnh', 'Văn bản', 'Khác'].includes(itemType)) {
+          name = itemType;
+        }
+      }
+      const value = Number(item.count ?? item.value ?? 0);
+      acc[name] = { name, value: (acc[name]?.value ?? 0) + value };
+      return acc;
+    }, {})
+  );
+  const documentedTotal = normalizedTypeStats.reduce((sum, item) => sum + item.value, 0);
 
   if (user?.role === 'ROLE_MODERATOR' || user?.role === 'MODERATOR') {
     return <ModeratorDashboardHome />;
@@ -322,6 +347,156 @@ const AdminDashboardHome = () => {
           ) : (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: 'var(--neutral-500)' }}>
               Chưa có dữ liệu upload
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Grid for Document Types & AI Usage charts */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginTop: '2rem' }}>
+        {/* Chart 1: Document Types Breakdown */}
+        <div className="dashboard-section glass-card" style={{ padding: '1.5rem' }}>
+          <div className="dashboard-section-header" style={{ marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--neutral-200)' }}>
+            <h3 className="dashboard-section-title" style={{ fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <FileText size={18} color="var(--primary-600)" /> Cơ cấu Định dạng Tài liệu ({documentedTotal.toLocaleString('vi-VN')} tệp)
+            </h3>
+          </div>
+          <div style={{ height: '260px', position: 'relative' }}>
+            {normalizedTypeStats && normalizedTypeStats.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={normalizedTypeStats}
+                    cx="50%"
+                    cy="42%"
+                    innerRadius={50}
+                    outerRadius={80}
+                    paddingAngle={3}
+                    dataKey="value"
+                    nameKey="name"
+                  >
+                    {normalizedTypeStats.map((entry, index) => {
+                      const typeColorMap = {
+                        'Word': '#3B82F6',
+                        'PDF': '#EF4444',
+                        'Văn bản': '#10B981',
+                        'Hình ảnh': '#F59E0B',
+                        'Khác': '#8B5CF6',
+                        'PowerPoint': '#64748B'
+                      };
+                      return <Cell key={`cell-${index}`} fill={typeColorMap[entry.name] || '#3B82F6'} />;
+                    })}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value) => [
+                      `${value.toLocaleString('vi-VN')} tài liệu (${((value / (documentedTotal || 1)) * 100).toFixed(1)}%)`,
+                      'Số lượng'
+                    ]}
+                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                  />
+                  <Legend 
+                    verticalAlign="bottom"
+                    iconType="square"
+                    iconSize={8}
+                    wrapperStyle={{ fontSize: '12px' }}
+                    formatter={(value, entry) => {
+                      const item = normalizedTypeStats.find((e) => e.name === value);
+                      const pct = documentedTotal ? Math.round((item?.value / documentedTotal) * 100) : 0;
+                      return (
+                        <span style={{ color: entry.color, fontWeight: 600, fontSize: '12px', marginRight: '6px' }}>
+                          {value}: {item?.value || 0} ({pct}%)
+                        </span>
+                      );
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--neutral-500)', fontSize: '14px' }}>
+                Đang cập nhật phân loại tài liệu...
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Chart 2: AI Usage Engagement Rate */}
+        <div className="dashboard-section glass-card" style={{ padding: '1.5rem' }}>
+          <div className="dashboard-section-header" style={{ marginBottom: '1rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--neutral-200)' }}>
+            <h3 className="dashboard-section-title" style={{ fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <MessageSquare size={18} color="#8B5CF6" /> Tỷ lệ Sử dụng AI Chat
+            </h3>
+          </div>
+          <div style={{ height: '260px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+            {aiUsage ? (
+              <>
+                <ResponsiveContainer width="100%" height="80%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: 'Đã dùng AI Chat', value: aiUsage.documentsWithAiChat || 0, color: '#8B5CF6' },
+                        { name: 'Chưa dùng AI Chat', value: aiUsage.documentsWithoutAiChat || 0, color: '#E2E8F0' }
+                      ]}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={55}
+                      outerRadius={85}
+                      paddingAngle={3}
+                      dataKey="value"
+                    >
+                      <Cell fill="#8B5CF6" />
+                      <Cell fill="#E2E8F0" />
+                    </Pie>
+                    <Tooltip 
+                      formatter={(val, name) => [`${val} tệp`, name]}
+                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div style={{ textAlign: 'center', marginTop: '-10px' }}>
+                  <span style={{ fontSize: '22px', fontWeight: 800, color: '#8B5CF6' }}>
+                    {aiUsage.aiUsagePercent || 0}%
+                  </span>
+                  <span style={{ display: 'block', fontSize: '12px', color: 'var(--neutral-500)', fontWeight: 500 }}>
+                    tài liệu được tương tác với AI ({aiUsage.documentsWithAiChat || 0}/{aiUsage.totalDocuments || 0})
+                  </span>
+                </div>
+              </>
+            ) : (
+              <div style={{ color: 'var(--neutral-500)', fontSize: '14px' }}>Đang tải tỷ lệ AI...</div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Chart 3: Top Active Subjects (Horizontal Bar Chart) */}
+      <div className="dashboard-section glass-card" style={{ marginTop: '2rem', padding: '1.5rem' }}>
+        <div className="dashboard-section-header" style={{ marginBottom: '1.25rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--neutral-200)' }}>
+          <h3 className="dashboard-section-title" style={{ fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <BookOpen size={18} color="#10B981" /> Phân bổ Môn học / Lĩnh vực Nổi bật
+          </h3>
+        </div>
+        <div style={{ height: '280px', width: '100%' }}>
+          {subjectStats && subjectStats.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                layout="vertical"
+                data={subjectStats}
+                margin={{ top: 10, right: 30, left: 40, bottom: 5 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="var(--neutral-200)" />
+                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12, fill: 'var(--neutral-500)' }} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 13, fill: 'var(--neutral-800)', fontWeight: 500 }} axisLine={false} tickLine={false} width={130} />
+                <Tooltip
+                  cursor={{ fill: 'var(--neutral-100)' }}
+                  formatter={(val) => [`${val} tài liệu`, 'Số lượng']}
+                  contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                />
+                <Bar dataKey="count" fill="#10B981" radius={[0, 6, 6, 0]} barSize={22} name="Số lượng tài liệu" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--neutral-500)', fontSize: '14px' }}>
+              Chưa có dữ liệu phân bổ môn học
             </div>
           )}
         </div>

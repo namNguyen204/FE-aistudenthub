@@ -258,6 +258,19 @@ const adminService = {
       const response = await api.patch(`/admin/pricing-plans/${id}`, data);
       return response.data?.data;
     }
+  },
+
+  // ---- Transactions / Payment Orders ----
+  getTransactions: async (status = '', page = 0, size = 20) => {
+    try {
+      const params = new URLSearchParams({ page, size });
+      if (status && status !== 'ALL') params.append('status', status);
+      const response = await api.get(`/admin/dashboard/transactions?${params.toString()}`);
+      return response.data?.data;
+    } catch (e) {
+      console.warn('Lỗi khi lấy danh sách giao dịch admin:', e);
+      return { content: [], totalElements: 0, totalPages: 0 };
+    }
   }
 };
 

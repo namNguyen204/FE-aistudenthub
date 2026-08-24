@@ -34,6 +34,7 @@ import AdminChatModeration from '../admin/AdminChatModeration';
 import AdminSystemConfig from '../admin/AdminSystemConfig';
 import AdminReportList from '../admin/AdminReportList';
 import AdminSubscriptionPlans from '../admin/AdminSubscriptionPlans';
+import AdminRevenue from '../admin/AdminRevenue';
 
 // Payment
 import PaymentPackage from './payment/PaymentPackage';
@@ -46,6 +47,7 @@ export {
   UserProfile,
   CommunityDocuments,
   AdminDashboardHome,
+  AdminRevenue,
   AdminUserList,
   AdminDocumentList,
   ModeratorDocumentList,

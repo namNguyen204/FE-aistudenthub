@@ -21,7 +21,8 @@ import {
   Zap,
   Globe,
   Share2,
-  Flag
+  Flag,
+  TrendingUp
 } from 'lucide-react';
 import Button from '../components/Button/Button';
 import './DashboardLayout.css';
@@ -67,6 +68,7 @@ const DashboardLayout = () => {
 
   const adminNavigation = [
     { name: 'Dashboard', to: '/admin', icon: <BarChart size={20} /> },
+    { name: 'Quản lý Doanh thu', to: '/admin/revenue', icon: <TrendingUp size={20} /> },
     { name: 'Quản lý Người dùng', to: '/admin/users', icon: <Users size={20} /> },
     { name: 'Tài liệu Hệ thống', to: '/admin/documents', icon: <FileText size={20} /> },
     { name: 'Quản lý Chat', to: '/admin/chats', icon: <MessageSquare size={20} /> },

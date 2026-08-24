@@ -10,6 +10,7 @@ import {
   DashboardHome, 
   UserProfile,
   AdminDashboardHome,
+  AdminRevenue,
   AdminUserList,
   AdminChatModeration,
   AdminSystemConfig,
@@ -97,6 +98,7 @@ function AppRoutes() {
           element={<ProtectedRoute requireAdmin={true} allowedRoles={['ADMIN']}><DashboardLayout /></ProtectedRoute>}
         >
           <Route index element={<AdminDashboardHome />} />
+          <Route path="revenue" element={<AdminRevenue />} />
           <Route path="users" element={<AdminUserList />} />
           <Route path="documents" element={<AdminDocumentList />} />
           <Route path="chats" element={<AdminChatModeration />} />
