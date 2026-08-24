@@ -22,11 +22,18 @@
 
 .profile-tabs {
   display: flex;
+  justify-content: center;
   gap: 1rem;
   border-bottom: 2px solid var(--neutral-200);
   margin-bottom: 2rem;
   overflow-x: auto;
   padding-bottom: 4px;
+}
+
+@media (max-width: 768px) {
+  .profile-tabs {
+    justify-content: flex-start;
+  }
 }
 
 .tab-btn {

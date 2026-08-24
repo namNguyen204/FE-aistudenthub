@@ -1,14 +1,85 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Plus, Send, MessageSquare, Trash2, Bot, User, FileText } from 'lucide-react';
+import { 
+  Plus, 
+  Send, 
+  MessageSquare, 
+  Trash2, 
+  Bot, 
+  User, 
+  FileText, 
+  Sparkles, 
+  Search, 
+  Copy, 
+  Check, 
+  Lightbulb, 
+  BookOpen, 
+  Code2, 
+  PenTool, 
+  ArrowUpRight, 
+  CornerDownLeft,
+  ShieldCheck,
+  ThumbsUp,
+  ThumbsDown
+} from 'lucide-react';
 import chatService from '../../../services/chat.service';
 import documentService from '../../../services/document.service';
 import ConfirmDeleteModal from '../../../components/Modal/ConfirmDeleteModal';
 import './AIChatbot.css';
 
+const CodeBlock = ({ code, language = 'code' }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="code-block-container">
+      <div className="code-block-header">
+        <span className="code-block-lang">{language}</span>
+        <button className="code-copy-btn" onClick={handleCopy} title="Sao chép mã">
+          {copied ? <Check size={14} className="copied-icon" /> : <Copy size={14} />}
+          <span>{copied ? 'Đã chép' : 'Sao chép'}</span>
+        </button>
+      </div>
+      <pre className="code-block-content">
+        <code>{code}</code>
+      </pre>
+    </div>
+  );
+};
+
 const renderFormattedMessage = (text) => {
   if (!text) return null;
 
+  // Check for multiline code blocks enclosed in ```
+  if (text.includes('```')) {
+    const parts = text.split(/(```[\s\S]*?```)/g);
+    return parts.map((part, index) => {
+      if (part.startsWith('```') && part.endsWith('```')) {
+        const firstLineEnd = part.indexOf('\n');
+        let lang = 'code';
+        let codeContent;
+        if (firstLineEnd !== -1) {
+          lang = part.substring(3, firstLineEnd).trim() || 'code';
+          codeContent = part.substring(firstLineEnd + 1, part.length - 3);
+        } else {
+          codeContent = part.substring(3, part.length - 3);
+        }
+        return <CodeBlock key={index} code={codeContent} language={lang} />;
+      } else {
+        return <React.Fragment key={index}>{parseTextLines(part)}</React.Fragment>;
+      }
+    });
+  }
+
+  return parseTextLines(text);
+};
+
+const parseTextLines = (text) => {
   const lines = text.split('\n');
 
   return lines.map((line, lineIdx) => {
@@ -32,7 +103,7 @@ const renderFormattedMessage = (text) => {
           parts.push(<em key={match.index}>{match[4]}</em>);
         } else if (match[5]) {
           parts.push(
-            <code key={match.index} style={{ backgroundColor: 'var(--neutral-100)', padding: '2px 6px', borderRadius: '4px', fontFamily: 'monospace', fontSize: '0.9em' }}>
+            <code key={match.index} className="inline-code">
               {match[5]}
             </code>
           );
@@ -54,8 +125,8 @@ const renderFormattedMessage = (text) => {
     return (
       <React.Fragment key={lineIdx}>
         {isBullet ? (
-          <div style={{ display: 'flex', gap: '8px', marginLeft: '8px', margin: '2px 0' }}>
-            <span style={{ color: 'var(--primary-600)', fontWeight: 'bold' }}>•</span>
+          <div className="bullet-item">
+            <span className="bullet-dot">•</span>
             <span>{parseLineTokens(cleanedLine)}</span>
           </div>
         ) : (
@@ -68,10 +139,41 @@ const renderFormattedMessage = (text) => {
 };
 
 const SUGGESTIONS = [
-  { icon: '💡', title: 'Giải thích khái niệm', desc: 'Giải thích chủ đề phức tạp theo cách dễ hiểu.' },
-  { icon: '📝', title: 'Tóm tắt tài liệu', desc: 'Tóm tắt các ý chính của tài liệu học tập.' },
-  { icon: '💻', title: 'Hỗ trợ viết code', desc: 'Viết, giải thích hoặc tìm lỗi cho đoạn mã.' },
-  { icon: '✍️', title: 'Soạn thảo nội dung', desc: 'Lên ý tưởng, viết bài luận hoặc soạn thư.' }
+  {
+    icon: Lightbulb,
+    badgeColor: 'amber',
+    title: 'Giải thích khái niệm',
+    desc: 'Phân tích các chủ đề hoặc công thức phức tạp một cách ngắn gọn, trực quan và dễ hiểu.',
+    prompt: 'Hãy giải thích cho tôi về khái niệm: '
+  },
+  {
+    icon: BookOpen,
+    badgeColor: 'blue',
+    title: 'Tóm tắt tài liệu học',
+    desc: 'Rút ra các ý chính, từ khóa quan trọng và lộ trình bài học từ nội dung được chọn.',
+    prompt: 'Hãy tóm tắt các điểm quan trọng nhất trong chủ đề: '
+  },
+  {
+    icon: Code2,
+    badgeColor: 'emerald',
+    title: 'Hỗ trợ Lập trình & Debug',
+    desc: 'Viết thuật toán, tối ưu hóa đoạn mã hoặc tìm và sửa lỗi trong chương trình của bạn.',
+    prompt: 'Hãy giúp tôi kiểm tra đoạn mã nguồn này: '
+  },
+  {
+    icon: PenTool,
+    badgeColor: 'purple',
+    title: 'Soạn thảo & Ý tưởng',
+    desc: 'Lên dàn ý bài luận, viết đề xuất dự án hoặc biên soạn nội dung trao đổi chuyên môn.',
+    prompt: 'Hãy giúp tôi gợi ý dàn ý cho nội dung: '
+  }
+];
+
+const QUICK_CHIPS = [
+  "💡 Giải thích khái niệm",
+  "📝 Tóm tắt ý chính",
+  "💻 Debug đoạn mã",
+  "🎯 Đặt 5 câu hỏi ôn tập"
 ];
 
 const AIChatbot = () => {
@@ -83,11 +185,15 @@ const AIChatbot = () => {
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [copiedMsgId, setCopiedMsgId] = useState(null);
 
   // Context selection
   const [myDocuments, setMyDocuments] = useState([]);
-  const [selectedDocumentId, setSelectedDocumentId] = useState('');
-  const [sharedDoc, setSharedDoc] = useState(null);
+  const [selectedDocumentId, setSelectedDocumentId] = useState(() => location.state?.documentId || '');
+  const [sharedDoc] = useState(() => location.state?.documentTitle
+    ? { id: location.state.documentId, title: location.state.documentTitle }
+    : null);
 
   // Delete Confirmation State
   const [sessionToDelete, setSessionToDelete] = useState(null);
@@ -97,74 +203,73 @@ const AIChatbot = () => {
   const textareaRef = useRef(null);
   const sendingRef = useRef(false);
 
-  useEffect(() => {
-    loadSessions();
-    loadMyDocuments();
-
-    // If navigated from DocumentDetail with state
-    if (location.state?.documentId) {
-      setSelectedDocumentId(location.state.documentId);
-      if (location.state.documentTitle) {
-        setSharedDoc({ id: location.state.documentId, title: location.state.documentTitle });
-      }
-      // Clean up history state so refresh doesn't lock it
-      window.history.replaceState({}, document.title);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (currentSessionId) {
-      loadSessionMessages(currentSessionId);
-    } else {
-      setMessages([]);
-    }
-  }, [currentSessionId]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, isTyping]);
-
-  const loadSessions = async () => {
+  const loadSessions = useCallback(async () => {
     try {
       const data = await chatService.getSessions();
       setSessions(data || []);
     } catch (err) {
       console.error('Failed to load chat sessions', err);
     }
-  };
+  }, []);
 
-  const loadMyDocuments = async () => {
-    try {
-      // Just fetch all documents or recent ones for context selection
-      const data = await documentService.getMyDocuments();
-      setMyDocuments(data || []);
-    } catch (err) {
-      console.error('Failed to load documents for chat context', err);
-    }
-  };
-
-  const loadSessionMessages = async (sessionId) => {
+  const loadSessionMessages = useCallback(async (sessionId) => {
     try {
       const data = await chatService.getSessionMessages(sessionId);
       setMessages(data || []);
-
-      // Auto-set the selected document context if this session is tied to a document
-      const session = sessions.find(s => s.id === sessionId);
-      if (session && session.documentId) {
-        setSelectedDocumentId(session.documentId);
-      } else if (session && !session.documentId) {
-        setSelectedDocumentId(''); // General AI
-      }
     } catch (err) {
       console.error('Failed to load session messages', err);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadInitialData = async () => {
+      const [sessionsResult, documentsResult] = await Promise.allSettled([
+        chatService.getSessions(),
+        documentService.getMyDocuments()
+      ]);
+
+      if (cancelled) return;
+
+      if (sessionsResult.status === 'fulfilled') {
+        setSessions(sessionsResult.value || []);
+      } else {
+        console.error('Failed to load chat sessions', sessionsResult.reason);
+      }
+
+      if (documentsResult.status === 'fulfilled') {
+        setMyDocuments(documentsResult.value || []);
+      } else {
+        console.error('Failed to load documents for chat context', documentsResult.reason);
+      }
+    };
+
+    loadInitialData();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (location.state?.documentId) {
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.pathname, location.state?.documentId, navigate]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isTyping]);
 
   const handleNewChat = () => {
     setCurrentSessionId(null);
     setMessages([]);
-    // Optionally keep the currently selected document context or reset it
-    // setSelectedDocumentId(''); 
+  };
+
+  const handleSelectSession = (session) => {
+    setCurrentSessionId(session.id);
+    setSelectedDocumentId(session.documentId || '');
+    loadSessionMessages(session.id);
   };
 
   const confirmDeleteSession = (sessionId, e) => {
@@ -182,24 +287,24 @@ const AIChatbot = () => {
       }
       loadSessions();
       setSessionToDelete(null);
-    } catch (err) {
+    } catch {
       alert('Xóa phiên thất bại');
     } finally {
       setIsDeletingSession(false);
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!inputText.trim() || isTyping || sendingRef.current) return;
+  const handleSendMessage = async (textOverride = null) => {
+    const messageContent = typeof textOverride === 'string' ? textOverride : inputText;
+    if (!messageContent.trim() || isTyping || sendingRef.current) return;
 
     sendingRef.current = true;
-    const textToSend = inputText.trim();
+    const textToSend = messageContent.trim();
     setInputText('');
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
     }
 
-    // Add user message to UI optimistically
     const optimisticMsg = {
       id: Date.now().toString(),
       sender: 'USER',
@@ -217,14 +322,11 @@ const AIChatbot = () => {
         response = await chatService.chat(textToSend, currentSessionId);
       }
 
-      // If this was a new session, set the currentSessionId
       if (!currentSessionId && response.sessionId) {
         setCurrentSessionId(response.sessionId);
-        // We also need to reload sessions to update the sidebar
         loadSessions();
       }
 
-      // Add AI response to UI
       const aiMsg = {
         id: Date.now().toString() + '-ai',
         sender: 'AI',
@@ -235,10 +337,8 @@ const AIChatbot = () => {
 
     } catch (err) {
       console.error('Chat error', err);
-
       const apiErrorMessage = err.response?.data?.message || 'Xin lỗi, tôi gặp lỗi khi xử lý yêu cầu của bạn. Vui lòng thử lại.';
 
-      // Show error as a system message
       setMessages(prev => [...prev, {
         id: Date.now().toString() + '-err',
         sender: 'AI',
@@ -261,12 +361,24 @@ const AIChatbot = () => {
 
   const autoResizeTextarea = (e) => {
     e.target.style.height = 'auto';
-    e.target.style.height = (e.target.scrollHeight) + 'px';
+    e.target.style.height = Math.min(e.target.scrollHeight, 180) + 'px';
   };
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const handleCopyMessage = (msgId, text) => {
+    navigator.clipboard.writeText(text);
+    setCopiedMsgId(msgId);
+    setTimeout(() => setCopiedMsgId(null), 2000);
   };
+
+  const filteredSessions = sessions.filter(session => 
+    (session.title || 'Cuộc trò chuyện mới').toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const activeDocTitle = selectedDocumentId 
+    ? (sharedDoc && sharedDoc.id === selectedDocumentId 
+        ? sharedDoc.title 
+        : myDocuments.find(d => d.id === selectedDocumentId)?.title || 'Tài liệu đã chọn')
+    : null;
 
   return (
     <div className="chat-page-wrapper">
@@ -274,25 +386,49 @@ const AIChatbot = () => {
       <aside className="chat-sidebar">
         <div className="chat-sidebar-header">
           <button className="new-chat-btn" onClick={handleNewChat}>
-            <Plus size={18} /> Cuộc trò chuyện mới
+            <Plus size={18} className="new-chat-icon" />
+            <span>Cuộc trò chuyện mới</span>
           </button>
+
+          {/* Search box for sessions */}
+          {sessions.length > 0 && (
+            <div className="sidebar-search-box">
+              <Search size={14} className="search-icon" />
+              <input 
+                type="text" 
+                placeholder="Tìm cuộc trò chuyện..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          )}
         </div>
 
         <div className="chat-sessions-list">
           {sessions.length === 0 ? (
-            <div style={{ textAlign: 'center', color: 'var(--neutral-400)', padding: '2rem 1rem', fontSize: '13px' }}>
-              Không tìm thấy cuộc trò chuyện trước đó.
+            <div className="empty-sessions">
+              <div className="empty-sessions-icon">
+                <MessageSquare size={28} />
+              </div>
+              <p>Chưa có cuộc trò chuyện nào</p>
+              <span>Bắt đầu cuộc hội thoại mới với Trợ lý AI ngay bên cạnh.</span>
+            </div>
+          ) : filteredSessions.length === 0 ? (
+            <div className="empty-sessions">
+              <p>Không tìm thấy kết quả</p>
             </div>
           ) : (
-            sessions.map(session => (
+            filteredSessions.map(session => (
               <div
                 key={session.id}
                 className={`chat-session-item ${currentSessionId === session.id ? 'active' : ''}`}
-                onClick={() => setCurrentSessionId(session.id)}
+                onClick={() => handleSelectSession(session)}
               >
+                <div className="session-icon-badge">
+                  <MessageSquare size={16} />
+                </div>
                 <div className="session-info">
                   <span className="session-title">
-                    <MessageSquare size={14} style={{ display: 'inline', marginRight: '6px', verticalAlign: 'text-bottom' }} />
                     {session.title || 'Cuộc trò chuyện mới'}
                   </span>
                   <span className="session-date">{new Date(session.updatedAt || session.createdAt).toLocaleDateString()}</span>
@@ -308,32 +444,45 @@ const AIChatbot = () => {
             ))
           )}
         </div>
+
+        <div className="sidebar-footer">
+          <div className="ai-status-pill">
+            <span className="status-dot"></span>
+            <span className="status-text">AI StudentHub v2.0</span>
+          </div>
+        </div>
       </aside>
 
       {/* Main Chat Area */}
       <main className="chat-main-area">
         <header className="chat-header">
           <div className="chat-header-title">
-            <div style={{ backgroundColor: 'var(--primary-100)', color: 'var(--primary-700)', padding: '8px', borderRadius: 'var(--radius-md)' }}>
-              <Bot size={24} />
+            <div className="ai-avatar-badge">
+              <Sparkles size={20} className="sparkle-icon" />
             </div>
-            <div>
-              <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--neutral-900)' }}>Trợ lý AI</h2>
-              <p style={{ fontSize: '13px', color: 'var(--neutral-500)' }}>
-                {selectedDocumentId 
-                  ? `Đang hỏi về tài liệu: ${sharedDoc && sharedDoc.id === selectedDocumentId ? sharedDoc.title : myDocuments.find(d => d.id === selectedDocumentId)?.title || 'Tài liệu không xác định'}` 
-                  : 'Kiến thức chung & hỗ trợ'}
+            <div className="header-text-group">
+              <div className="header-title-row">
+                <h2>Trợ lý AI StudentHub</h2>
+                <span className="online-badge">
+                  <span className="online-dot"></span> Sẵn sàng
+                </span>
+              </div>
+              <p className="header-subtitle">
+                {activeDocTitle 
+                  ? `Đang hội thoại dựa trên nội dung: "${activeDocTitle}"` 
+                  : 'Kiến thức tổng hợp & Giải đáp học tập toàn diện'}
               </p>
             </div>
           </div>
 
           <div className="context-selector">
-            <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--neutral-600)' }}>Ngữ cảnh trò chuyện:</span>
-            <div style={{ position: 'relative' }}>
-              <FileText size={16} style={{ position: 'absolute', left: '10px', top: '10px', color: 'var(--neutral-500)' }} />
+            <div className="context-label">
+              <FileText size={14} />
+              <span>Ngữ cảnh:</span>
+            </div>
+            <div className="context-select-wrapper">
               <select
                 className="context-select"
-                style={{ paddingLeft: '32px' }}
                 value={selectedDocumentId}
                 onChange={(e) => {
                   setSelectedDocumentId(e.target.value);
@@ -342,12 +491,12 @@ const AIChatbot = () => {
                   }
                 }}
               >
-                <option value="">Trí tuệ nhân tạo (Không có tài liệu)</option>
+                <option value="">Trí tuệ nhân tạo (Chung)</option>
                 {sharedDoc && !myDocuments.some(d => d.id === sharedDoc.id) && (
-                  <option value={sharedDoc.id}>{sharedDoc.title} (Tài liệu được chia sẻ)</option>
+                  <option value={sharedDoc.id}>📄 {sharedDoc.title} (Chia sẻ)</option>
                 )}
                 {myDocuments.map(doc => (
-                  <option key={doc.id} value={doc.id}>{doc.title}</option>
+                  <option key={doc.id} value={doc.id}>📄 {doc.title}</option>
                 ))}
               </select>
             </div>
@@ -357,78 +506,152 @@ const AIChatbot = () => {
         <div className="chat-messages">
           {messages.length === 0 ? (
             <div className="empty-chat-state">
-              <div className="empty-chat-icon">
-                <Bot size={40} />
+              <div className="hero-orb-wrapper">
+                <div className="hero-orb-glow"></div>
+                <div className="hero-orb-icon">
+                  <Bot size={44} />
+                </div>
               </div>
-              <h3 className="empty-chat-title">Hôm nay tôi có thể giúp gì cho bạn?</h3>
+
+              <h1 className="empty-chat-title">
+                Hôm nay tôi có thể <span className="gradient-text">giúp gì cho bạn?</span>
+              </h1>
+              
               <p className="empty-chat-desc">
                 {selectedDocumentId
-                  ? "Tôi đã sẵn sàng trả lời các câu hỏi cụ thể về tài liệu bạn đã chọn."
-                  : "Tôi là trợ lý thông minh của bạn. Hãy hỏi tôi bất cứ điều gì, hoặc chọn một tài liệu ở trên để dựa vào đó trả lời."}
+                  ? `Tôi đã tải xong tài liệu "${activeDocTitle}". Hãy đặt bất kỳ câu hỏi nào liên quan!`
+                  : "Hệ thống AI tích hợp hỗ trợ sinh viên tra cứu, học tập, tóm tắt tài liệu và tối ưu hoá mã nguồn."}
               </p>
+
+              {/* Quick Prompts Chips */}
+              <div className="quick-chips-row">
+                {QUICK_CHIPS.map((chip, idx) => (
+                  <button 
+                    key={idx} 
+                    className="quick-chip-btn"
+                    onClick={() => {
+                      const cleanText = chip.replace(/^[^\s]+\s+/, '');
+                      setInputText(cleanText + ": ");
+                      if (textareaRef.current) textareaRef.current.focus();
+                    }}
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
 
               {!selectedDocumentId && (
                 <div className="chat-suggestions-grid">
-                  {SUGGESTIONS.map((sug, idx) => (
-                    <div
-                      key={idx}
-                      className="chat-suggestion-card"
-                      onClick={() => {
-                        setInputText(sug.title + ": ");
-                        if (textareaRef.current) {
-                          textareaRef.current.focus();
-                        }
-                      }}
-                    >
-                      <div className="sug-icon">{sug.icon}</div>
-                      <div className="sug-content">
-                        <div className="sug-title">{sug.title}</div>
-                        <div className="sug-desc">{sug.desc}</div>
+                  {SUGGESTIONS.map((sug, idx) => {
+                    const IconComponent = sug.icon;
+                    return (
+                      <div
+                        key={idx}
+                        className={`chat-suggestion-card badge-${sug.badgeColor}`}
+                        onClick={() => {
+                          setInputText(sug.prompt);
+                          if (textareaRef.current) textareaRef.current.focus();
+                        }}
+                      >
+                        <div className="sug-header">
+                          <div className={`sug-icon-wrapper ${sug.badgeColor}`}>
+                            <IconComponent size={20} />
+                          </div>
+                          <ArrowUpRight size={18} className="sug-arrow-icon" />
+                        </div>
+                        <div className="sug-content">
+                          <div className="sug-title">{sug.title}</div>
+                          <div className="sug-desc">{sug.desc}</div>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
           ) : (
-            messages.map(msg => (
-              <div key={msg.id} className={`message-wrapper ${msg.sender.toLowerCase()}`}>
-                <div className={`message-avatar ${msg.sender.toLowerCase()}`}>
-                  {msg.sender === 'USER' ? <User size={20} /> : <Bot size={20} />}
-                </div>
-                <div>
-                  <div className="message-bubble" style={msg.isError ? { backgroundColor: 'var(--error-50)', color: 'var(--error-600)', borderColor: 'var(--error-200)' } : {}}>
-                    {renderFormattedMessage(msg.message)}
+            <div className="messages-container">
+              {messages.map(msg => (
+                <div key={msg.id} className={`message-wrapper ${msg.sender.toLowerCase()}`}>
+                  <div className={`message-avatar ${msg.sender.toLowerCase()}`}>
+                    {msg.sender === 'USER' ? (
+                      <User size={18} />
+                    ) : (
+                      <Sparkles size={18} />
+                    )}
                   </div>
-                  <div className="message-time">
-                    {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
 
-          {isTyping && (
-            <div className="message-wrapper ai">
-              <div className="message-avatar ai">
-                <Bot size={20} />
-              </div>
-              <div className="message-bubble typing-indicator">
-                <div className="typing-dot"></div>
-                <div className="typing-dot"></div>
-                <div className="typing-dot"></div>
-              </div>
+                  <div className="message-content-group">
+                    <div className="message-sender-name">
+                      {msg.sender === 'USER' ? 'Bạn' : 'Trợ lý AI'}
+                    </div>
+
+                    <div className={`message-bubble ${msg.sender.toLowerCase()} ${msg.isError ? 'is-error' : ''}`}>
+                      {renderFormattedMessage(msg.message)}
+                    </div>
+
+                    <div className="message-footer-bar">
+                      <span className="message-time">
+                        {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                      </span>
+
+                      {msg.sender === 'AI' && !msg.isError && (
+                        <div className="message-actions">
+                          <button 
+                            className="msg-action-btn" 
+                            onClick={() => handleCopyMessage(msg.id, msg.message)}
+                            title="Sao chép toàn bộ phản hồi"
+                          >
+                            {copiedMsgId === msg.id ? <Check size={14} className="copied-check" /> : <Copy size={14} />}
+                          </button>
+                          <button className="msg-action-btn" title="Hữu ích">
+                            <ThumbsUp size={14} />
+                          </button>
+                          <button className="msg-action-btn" title="Chưa chính xác">
+                            <ThumbsDown size={14} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {isTyping && (
+                <div className="message-wrapper ai">
+                  <div className="message-avatar ai typing-avatar">
+                    <Sparkles size={18} />
+                  </div>
+                  <div className="message-content-group">
+                    <div className="message-sender-name">Trợ lý AI</div>
+                    <div className="message-bubble ai typing-indicator">
+                      <div className="typing-dot"></div>
+                      <div className="typing-dot"></div>
+                      <div className="typing-dot"></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
             </div>
           )}
-          <div ref={messagesEndRef} />
         </div>
 
+        {/* Input Area */}
         <div className="chat-input-area">
-          <div className="chat-input-wrapper">
+          {activeDocTitle && (
+            <div className="active-context-banner">
+              <FileText size={13} />
+              <span>Đang trò chuyện trong ngữ cảnh tài liệu: <strong>{activeDocTitle}</strong></span>
+              <button onClick={() => setSelectedDocumentId('')} title="Bỏ chọn ngữ cảnh">✕</button>
+            </div>
+          )}
+
+          <div className="chat-input-card">
             <textarea
               ref={textareaRef}
               className="chat-textarea"
-              placeholder={selectedDocumentId ? "Hỏi một câu hỏi về tài liệu này..." : "Nhắn tin cho Trợ lý AI..."}
+              placeholder={selectedDocumentId ? "Hỏi bất cứ điều gì về tài liệu này..." : "Nhập câu hỏi hoặc yêu cầu cho Trợ lý AI..."}
               value={inputText}
               onChange={(e) => {
                 setInputText(e.target.value);
@@ -437,28 +660,39 @@ const AIChatbot = () => {
               onKeyDown={handleKeyDown}
               rows={1}
             />
-            <button
-              className="send-btn"
-              onClick={handleSendMessage}
-              disabled={!inputText.trim() || isTyping}
-            >
-              <Send size={18} style={{ marginLeft: '2px' }} />
-            </button>
+
+            <div className="chat-input-actions">
+              <div className="input-hints">
+                <span className="kbd-hint"><CornerDownLeft size={12} style={{ display: 'inline', marginRight: 2 }} /> Enter gửi</span>
+                <span className="kbd-hint-sub">Shift + Enter xuống dòng</span>
+              </div>
+
+              <button
+                className="send-btn"
+                onClick={() => handleSendMessage()}
+                disabled={!inputText.trim() || isTyping}
+                title="Gửi tin nhắn"
+              >
+                <Send size={16} />
+              </button>
+            </div>
           </div>
-          <div style={{ fontSize: '11px', textAlign: 'center', marginTop: '8px', color: 'var(--neutral-400)' }}>
-            AI có thể mắc lỗi. Hãy cân nhắc xác minh các thông tin quan trọng.
+
+          <div className="chat-disclaimer">
+            <ShieldCheck size={13} style={{ display: 'inline', marginRight: '4px', verticalAlign: '-2px' }} />
+            AI có thể mắc sai sót. Hãy kiểm tra các thông tin quan trọng trước khi áp dụng vào bài học.
           </div>
         </div>
       </main>
 
-      {/* Professional Delete Confirmation Modal */}
+      {/* Delete Confirmation Modal */}
       <ConfirmDeleteModal
         isOpen={!!sessionToDelete}
         onClose={() => setSessionToDelete(null)}
         onConfirm={handleDeleteSession}
         isDeleting={isDeletingSession}
         title="Xóa phiên trò chuyện"
-        message="Bạn có chắc chắn muốn xóa phiên trò chuyện này không? Tất cả các tin nhắn bên trong phiên này sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác."
+        message="Bạn có chắc chắn muốn xóa phiên trò chuyện này không? Tất cả tin nhắn trong phiên này sẽ bị xóa vĩnh viễn và không thể hoàn tác."
       />
     </div>
   );
