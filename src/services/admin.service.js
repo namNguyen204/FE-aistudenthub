@@ -145,10 +145,11 @@ const adminService = {
   },
 
   // ---- Documents ----
-  getAllDocuments: async (keyword = '', page = 0, size = 20) => {
+  getAllDocuments: async (keyword = '', page = 0, size = 20, sort = 'createdAt,desc') => {
     try {
       const params = new URLSearchParams({ page, size });
       if (keyword) params.append('keyword', keyword);
+      if (sort) params.append('sort', sort);
       const response = await api.get(`/admin/documents?${params.toString()}`);
       return response.data?.data;
     } catch (e) {

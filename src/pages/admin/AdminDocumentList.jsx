@@ -7,12 +7,14 @@ import Modal from '../../components/Modal/Modal';
 import AdminDocumentPreviewModal from './AdminDocumentPreviewModal';
 import { formatDistanceToNow } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { sortDocuments } from '../../utils/documentSort';
 
 const AdminDocumentList = () => {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [keyword, setKeyword] = useState('');
+  const [sortOption, setSortOption] = useState('createdAt,desc');
   const [page, setPage] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [totalPublic, setTotalPublic] = useState(null);
@@ -161,7 +163,7 @@ const AdminDocumentList = () => {
   const fetchDocuments = async () => {
     setLoading(true);
     try {
-      const data = await adminService.getAllDocuments(keyword, page, 20);
+      const data = await adminService.getAllDocuments(keyword, page, 20, sortOption);
       setDocuments(data?.content || data?.data || data || []);
 
       let total = 0;
@@ -197,7 +199,7 @@ const AdminDocumentList = () => {
 
   useEffect(() => {
     fetchDocuments();
-  }, [page]);
+  }, [page, sortOption]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -242,7 +244,7 @@ const AdminDocumentList = () => {
     }
   };
 
-  const filteredDocuments = documents;
+  const filteredDocuments = sortDocuments(documents, sortOption);
 
   const getFileIcon = (fileType) => {
     return <FileText size={20} color="var(--primary-500)" />;
@@ -258,8 +260,8 @@ const AdminDocumentList = () => {
 
 
       <div className="dashboard-section glass-card" style={{ padding: '1.5rem' }}>
-        <form onSubmit={handleSearch} style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-          <div className="header-search" style={{ flex: 1, backgroundColor: 'var(--neutral-50)', border: '1px solid var(--neutral-200)', borderRadius: 'var(--radius-md)' }}>
+        <form onSubmit={handleSearch} style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
+          <div className="header-search" style={{ flex: '1 1 280px', backgroundColor: 'var(--neutral-50)', border: '1px solid var(--neutral-200)', borderRadius: 'var(--radius-md)' }}>
             <Search size={18} color="var(--neutral-400)" style={{ marginLeft: '1rem' }} />
             <input
               type="text"
@@ -269,6 +271,29 @@ const AdminDocumentList = () => {
               style={{ padding: '0.75rem', width: '100%', border: 'none', backgroundColor: 'transparent', outline: 'none' }}
             />
           </div>
+          <select
+            aria-label="Sắp xếp tài liệu"
+            value={sortOption}
+            onChange={(e) => {
+              setSortOption(e.target.value);
+              setPage(0);
+            }}
+            style={{
+              minWidth: '190px',
+              padding: '0.75rem 2.25rem 0.75rem 0.875rem',
+              border: '1px solid var(--neutral-200)',
+              borderRadius: 'var(--radius-md)',
+              backgroundColor: '#ffffff',
+              color: 'var(--neutral-700)',
+              cursor: 'pointer',
+              outline: 'none'
+            }}
+          >
+            <option value="createdAt,desc">Mới nhất</option>
+            <option value="createdAt,asc">Cũ nhất</option>
+            <option value="title,asc">Tên: A → Z</option>
+            <option value="title,desc">Tên: Z → A</option>
+          </select>
           <Button type="submit">Tìm kiếm</Button>
         </form>
 
