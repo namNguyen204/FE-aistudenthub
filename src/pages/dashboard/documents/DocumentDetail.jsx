@@ -293,7 +293,7 @@ const DocumentDetail = () => {
 
           <div className="meta-item">
             <span className="meta-label">Phiên bản</span>
-            <span className="meta-value" style={{ fontWeight: 600, color: 'var(--primary-600)' }}>v{doc.version || '1.0'}</span>
+            <span className="meta-value" style={{ fontWeight: 600, color: 'var(--primary-600)' }}>v{doc.currentVersionId || '1.0'}</span>
           </div>
 
           <div className="meta-item">
