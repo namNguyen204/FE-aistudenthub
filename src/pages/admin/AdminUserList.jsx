@@ -58,7 +58,7 @@ const AdminUserList = () => {
     try {
       const data = await adminService.getUsers(keyword, page, 20);
       setUsers(data?.content || []);
-      setTotalPages(data?.totalPages || 1);
+      setTotalPages(data?.totalPages || 2);
     } catch (err) {
       setError('Lỗi khi tải danh sách người dùng.');
       console.error(err);
