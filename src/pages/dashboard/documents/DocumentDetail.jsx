@@ -369,9 +369,7 @@ const DocumentDetail = () => {
                     <div style={{ display: 'flex', gap: '4px' }}>
                       {ver.fileUrl && (
                         <>
-                          <a href={ver.fileUrl} target="_blank" rel="noopener noreferrer" style={{ padding: '6px', backgroundColor: '#ffffff', border: '1px solid var(--neutral-200)', borderRadius: '6px', color: 'var(--neutral-600)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Xem file">
-                            <Eye size={14} />
-                          </a>
+                          
                           <a href={ver.fileUrl} download style={{ padding: '6px', backgroundColor: '#ffffff', border: '1px solid var(--neutral-200)', borderRadius: '6px', color: 'var(--neutral-600)', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Tải xuống">
                             <Download size={14} />
                           </a>
