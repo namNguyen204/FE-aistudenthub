@@ -474,13 +474,7 @@ const ModeratorDocumentList = () => {
 
                             {activeTab === 'PENDING' && (
                               <>
-                                <button
-                                  title="Xem trạng thái xử lý"
-                                  onClick={() => handleViewStatus(doc)}
-                                  style={{ padding: '0.5rem', borderRadius: '6px', border: 'none', cursor: 'pointer', backgroundColor: 'var(--neutral-100)', color: 'var(--neutral-700)' }}
-                                >
-                                  <Activity size={16} />
-                                </button>
+                                
                                 <button
                                   title="Duyệt tài liệu (Approve)"
                                   onClick={() => handleApprove(doc.id)}
