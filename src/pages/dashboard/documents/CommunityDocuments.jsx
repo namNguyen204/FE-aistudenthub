@@ -253,17 +253,7 @@ const CommunityDocuments = () => {
 
           </select>
           
-          <select
-            className="filter-select"
-            style={{ width: 'auto', flex: 1, minWidth: '160px' }}
-            value={filters.dateFilter}
-            onChange={(e) => setFilters(prev => ({ ...prev, dateFilter: e.target.value }))}
-          >
-            <option value="">Mọi lúc</option>
-            <option value="today">Hôm nay</option>
-            <option value="this_week">Tuần này</option>
-            <option value="this_month">Tháng này</option>
-          </select>
+          
         </div>
       </div>
 
@@ -310,8 +300,8 @@ const CommunityDocuments = () => {
                 >
                   <option value="createdAt,desc">Mới nhất (Latest)</option>
                   <option value="createdAt,asc">Cũ nhất (Oldest)</option>
-                  <option value="downloadCount,desc">Tải nhiều nhất</option>
-                  <option value="downloadCount,asc">Tải ít nhất</option>
+                  <option value="downloadCount,asc">Tải nhiều nhất</option>
+                  <option value="downloadCount,desc">Tải ít nhất</option>
                 </select>
               </div>
             </div>
